@@ -34,4 +34,10 @@
 - TBA
 - `example.cpp` can be useful
 
-    
+## Dependency
+
+- [cJSON](https://github.com/DaveGamble/cJSON)
+- [micro-ECC](https://github.com/kmackay/micro-ecc)
+- [bearssl](https://bearssl.org/)
+- [ESP32-Arduino](https://github.com/espressif/arduino-esp32)
+
