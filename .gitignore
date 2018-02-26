@@ -1,6 +1,8 @@
 src/Conf.h
 src/example/*
 readme_for_me.md
+tools/
+lib/
 
 .pioenvs
 .piolibdeps
