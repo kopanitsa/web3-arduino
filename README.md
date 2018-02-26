@@ -37,7 +37,6 @@
 ## Dependency
 
 - [cJSON](https://github.com/DaveGamble/cJSON)
-- [micro-ECC](https://github.com/kmackay/micro-ecc)
-- [bearssl](https://bearssl.org/)
+- [secp256k1](https://github.com/bitcoin-core/secp256k1)
 - [ESP32-Arduino](https://github.com/espressif/arduino-esp32)
 
