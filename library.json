@@ -1,0 +1,21 @@
+{
+  "name": "web3-arduino",
+  "keywords": "blockchain, web3, ethereum, smartcontract",
+  "description": "This is an Arduino (or ESP32) library to use web3 on Ethereum platform. You can call and send transactions to smart contract on Ethereum blockchain",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kopanitsa/web3-arduino.git"
+  },
+  "authors":
+  {
+    "name": "Takahiro Okada",
+    "email": "okada.takahiro111@gmail.com"
+  },
+  "version": "0.9",
+  "examples": "examples/*/*.ino",
+  "frameworks": "arduino",
+  "platforms": [
+    "atmelavr",
+    "espressif"
+  ]
+}

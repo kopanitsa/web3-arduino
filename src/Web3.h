@@ -2,8 +2,8 @@
 // Created by Okada, Takahiro on 2018/02/04.
 //
 
-#ifndef ARDUONO_WEB3_WEB3_H
-#define ARDUONO_WEB3_WEB3_H
+#ifndef ARDUINO_WEB3_WEB3_H
+#define ARDUINO_WEB3_WEB3_H
 
 #include "stdint.h"
 
@@ -40,4 +40,4 @@ private:
 
 };
 
-#endif //ARDUONO_WEB3_WEB3_H
+#endif //ARDUINO_WEB3_WEB3_H

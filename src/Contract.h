@@ -2,8 +2,8 @@
 // Created by Okada, Takahiro on 2018/02/05.
 //
 
-#ifndef ARDUONO_WEB3_CONTRACT_H
-#define ARDUONO_WEB3_CONTRACT_H
+#ifndef ARDUINO_WEB3_CONTRACT_H
+#define ARDUINO_WEB3_CONTRACT_H
 
 #include "Arduino.h"
 #include "Log.h"
@@ -22,7 +22,7 @@ public:
 
 public:
     Contract(Web3* _web3, const char* address);
-    void setPrivateKey(uint8_t* key);
+    void SetPrivateKey(uint8_t *key);
     void SetupContractData(char *out, const char *func, ...);
     void Call(char* param);
     void SendTransaction(uint8_t *msg,
@@ -60,4 +60,4 @@ private:
 };
 
 
-#endif //ARDUONO_WEB3_CONTRACT_H
+#endif //ARDUINO_WEB3_CONTRACT_H

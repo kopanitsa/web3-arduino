@@ -25,7 +25,7 @@ Contract::Contract(Web3* _web3, const char* address) {
     ctx = secp256k1_context_create(SECP256K1_CONTEXT_SIGN);
 }
 
-void Contract::setPrivateKey(uint8_t* key) {
+void Contract::SetPrivateKey(uint8_t *key) {
     privateKey = key;
 }
 

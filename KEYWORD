@@ -1,0 +1,35 @@
+########################################################
+# Class
+###################################################################
+
+Web3	KEYWORD1
+Contract	KEYWORD1
+
+###################################################################
+# Methods and Functions
+###################################################################
+
+Web3ClientVersion	KEYWORD2
+Web3Sha3	KEYWORD2
+NetVersion	KEYWORD2
+NetListening	KEYWORD2
+NetPeerCount	KEYWORD2
+EthProtocolVersion	KEYWORD2
+EthSyncing	KEYWORD2
+EthMining	KEYWORD2
+EthHashrate	KEYWORD2
+EthGasPrice	KEYWORD2
+EthAccounts	KEYWORD2
+EthBlockNumber	KEYWORD2
+EthGetTransactionCount	KEYWORD2
+EthCall	KEYWORD2
+EthSendSignedTransaction	KEYWORD2
+SetPrivateKey	KEYWORD2
+SetupContractData	KEYWORD2
+Call	KEYWORD2
+SendTransaction	KEYWORD2
+
+###################################################################
+# Constants
+###################################################################
+

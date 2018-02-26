@@ -227,9 +227,9 @@ void Web3::EthSendSignedTransaction(uint8_t* data, uint32_t dataLen, char* outpu
     sprintf(param, "[\"%s\"]", tmp);
     generateJson(input, "eth_sendRawTransaction", param);
 
-    LOG("-- sendRawTransaction --------");
+#if 0
     LOG(input);
-
+#endif
     exec(input, output);
 }
 
@@ -362,4 +362,3 @@ void Web3::getString(const char* json, char* output) {
     cJSON_free(root);
 
 }
-

@@ -2,8 +2,8 @@
 // Created by Okada, Takahiro on 2018/02/04.
 //
 
-#ifndef ARDUONO_WEB3_LOG_H
-#define ARDUONO_WEB3_LOG_H
+#ifndef ARDUINO_WEB3_LOG_H
+#define ARDUINO_WEB3_LOG_H
 
 #define DEBUGLOG
 
@@ -13,4 +13,4 @@ public:
     void println(const char* s);
 };
 
-#endif //ARDUONO_WEB3_LOG_H
+#endif //ARDUINO_WEB3_LOG_H

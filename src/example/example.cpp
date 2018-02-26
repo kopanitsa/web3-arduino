@@ -7,10 +7,9 @@
 
 #include <Arduino.h>
 #include <WiFi.h>
-#include <web3/Contract.h>
+#include <Contract.h>
 #include "Conf.h"
-#include "web3/Web3.h"
-#include "web3/Contract.h"
+#include "Web3.h"
 
 #define USE_SERIAL Serial
 
@@ -192,7 +191,7 @@ void testEth3() {
     memset(result, 0, 128);
 
     Contract contract(&web3, "0xe759aab0343e7d4c9e23ac5760a12ed9d9af4421");
-    contract.setPrivateKey((uint8_t*)privateKey);
+    contract.SetPrivateKey((uint8_t *) privateKey);
     uint32_t nonceVal = (uint32_t)web3.EthGetTransactionCount((char *)"0xd7049ea6f47ef848C0Ad570dbA618A9f6e4Eb25C");
 
     uint32_t gasPriceVal = 141006540;
