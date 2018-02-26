@@ -38,7 +38,7 @@ Please refer `examples` directory.
 
 ### setup
 
-```
+```C++
 #define INFURA_HOST "rinkeby.infura.io"
 #define INFURA_PATH "/<YOUR_INFURA_ID>"
 
@@ -47,7 +47,7 @@ Web3 web3(INFURA_HOST, INFURA_PATH);
 
 ### call web3 methods
 
-```
+```C++
 char result[128];
 
 web3.Web3ClientVersion(result);
@@ -59,7 +59,7 @@ USE_SERIAL.println(result);
 
 ### `call` to Contract
 
-```
+```C++
 Contract contract(&web3, CONTRACT_ADDRESS);
 strcpy(contract.options.from, MY_ADDRESS);
 strcpy(contract.options.gasPrice,"2000000000000");
@@ -71,7 +71,7 @@ USE_SERIAL.println(result);
 
 ### `sendTransaction` to Contract
 
-```
+```C++
 Contract contract(&web3, CONTRACT_ADDRESS);
 contract.SetPrivateKey((uint8_t*)PRIVATE_KEY);
 uint32_t nonceVal = (uint32_t)web3.EthGetTransactionCount((char *)MY_ADDRESS);
