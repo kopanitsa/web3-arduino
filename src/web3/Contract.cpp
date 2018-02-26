@@ -7,8 +7,12 @@
 #include <WiFi.h>
 #include "Util.h"
 #include "Log.h"
-#include "micro-ecc/uECC.h"
-#include "bearssl/inc/bearssl_hash.h"
+
+#include "secp256k1/include/secp256k1_recovery.h"
+#include "secp256k1/src/secp256k1_c.h"
+#include "secp256k1/src/module/recovery/main_impl.h"
+
+static secp256k1_context *ctx;
 
 Contract::Contract(Web3* _web3, const char* address) {
     web3 = _web3;
@@ -17,6 +21,8 @@ Contract::Contract(Web3* _web3, const char* address) {
     strcpy(options.from,"");
     strcpy(options.to,"");
     strcpy(options.gasPrice,"0");
+
+    ctx = secp256k1_context_create(SECP256K1_CONTEXT_SIGN);
 }
 
 void Contract::setPrivateKey(uint8_t* key) {
@@ -47,8 +53,13 @@ void Contract::SetupContractData(char *out, const char *func, ...) {
     char contractBytes[11];
     memset(contractBytes, 0, 11);
     GenerateContractBytes(func, contractBytes);
+    sprintf(out, "%s%s", out, contractBytes);
+
+#if 0
     LOG("==============");
     LOG(contractBytes);
+    LOG("==============");
+#endif
 
     // funcの文字列をdecodeして、どの型の引数がいくつあるかを解析
     size_t paramCount = 0;
@@ -71,13 +82,11 @@ void Contract::SetupContractData(char *out, const char *func, ...) {
             strcpy(params[paramCount++], p);
         }
     }
-    LOG("==============");
 
     // 上の個数と型に応じてbyte列を生成
     va_list args;
     va_start(args, paramCount);
     for( int i = 0; i < paramCount; ++i ) {
-        LOG(params[i]);
         if (strncmp(params[i], "uint", 4) == 0) {
             char output[64+2+1];
             memset(output, 0, 64+2+1);
@@ -122,55 +131,66 @@ void Contract::Call(char* param) {
     LOG(result);
 }
 
-void Contract::SetupTransaction(uint32_t nonceVal, uint32_t gasPriceVal, uint32_t  gasLimitVal,
-                                uint8_t* toStr, uint8_t* valueStr, uint8_t* dataStr) {
+void Contract::SendTransaction(uint8_t *output,
+                               uint32_t nonceVal, uint32_t gasPriceVal, uint32_t gasLimitVal,
+                               uint8_t *toStr, uint8_t *valueStr, uint8_t *dataStr) {
+    uint8_t param[256];
+    memset(param,0,256);
 
     uint8_t signature[64];
-    SetupTransactionImpl1(signature, nonceVal, gasPriceVal, gasLimitVal, toStr, valueStr, dataStr);
-    printf("\nsig\n");
-    for (int j=0; j<64; j++) {
-        printf("%02x ", signature[j]);
+    memset(signature,0,64);
+    int recid[1] = {1};
+    SetupTransactionImpl1(signature, recid, nonceVal, gasPriceVal, gasLimitVal, toStr, valueStr, dataStr);
+    uint32_t len = SetupTransactionImpl2(param, nonceVal, gasPriceVal, gasLimitVal, toStr, valueStr, dataStr, signature, recid[0]);
+
+#if 0
+    printf("\nGenerated Transaction--------\n ");
+    printf("len:%d", (int)len);
+    for (int i = 0; i<len; i++) {
+        printf("%02x ", param[i]);
     }
-    printf("\n");
-    SetupTransactionImpl2(nonceVal, gasPriceVal, gasLimitVal, toStr, valueStr, dataStr, signature);
+#endif
+    web3->EthSendSignedTransaction(param, len, (char *)output);
 
-
-    // send raw transaction
 }
 
-void Contract::SetupTransactionImpl1(uint8_t* signature, uint32_t nonceVal, uint32_t gasPriceVal, uint32_t  gasLimitVal,
+void Contract::SetupTransactionImpl1(uint8_t* signature, int* recid, uint32_t nonceVal, uint32_t gasPriceVal, uint32_t  gasLimitVal,
                                 uint8_t* toStr, uint8_t* valueStr, uint8_t* dataStr) {
     // encode
     uint8_t encoded[256];
     memset(encoded,0,256);
     char tmp[256];
     memset(tmp,0,256);
-    uint32_t encoded_len = RlpEncode(encoded, nonceVal, gasLimitVal, gasLimitVal, toStr, valueStr, dataStr);
+    uint32_t encoded_len = RlpEncode(encoded, nonceVal, gasPriceVal, gasLimitVal, toStr, valueStr, dataStr);
 
     // hash
     char hashedStr[256];
     memset(hashedStr,0,256);
     Util::BufToString(tmp, encoded, encoded_len);
     web3->Web3Sha3((char*)tmp, (char*)hashedStr);
-    printf("hash: %s\n", hashedStr);
 
     // sign
     memset(tmp,0,256);
-    Util::BufToString(tmp, (uint8_t *)hashedStr, 32);
-    memset(signature,0,64);
-    Sign((uint8_t*)tmp, signature);
+    Util::ConvertStringToUintArray((uint8_t*)tmp, (uint8_t*)hashedStr);
+    Sign((uint8_t*)tmp, signature, recid);
+
+#if 0
+    printf("\nhash_input : %s\n", tmp);
+    printf("\nhash_output: %s\n", hashedStr);
+    printf("\nhash--------\n ");
+    for (int i = 0; i<32; i++) {
+        printf("%02x ", tmp[i]);
+    }
+#endif
 }
 
-void Contract::SetupTransactionImpl2(uint32_t nonceVal, uint32_t gasPriceVal, uint32_t  gasLimitVal,
-                                     uint8_t* toStr, uint8_t* valueStr, uint8_t* dataStr, uint8_t* signature) {
+uint32_t Contract::SetupTransactionImpl2(uint8_t* out,
+                                     uint32_t nonceVal, uint32_t gasPriceVal, uint32_t  gasLimitVal,
+                                     uint8_t* toStr, uint8_t* valueStr, uint8_t* dataStr, uint8_t* signature, uint8_t recid) {
 
     // generate data
-    uint8_t encoded[256];
-    memset(encoded,0,256);
-    uint32_t encoded_len = RlpEncodeForRawTransaction(encoded, nonceVal, gasLimitVal, gasLimitVal, toStr, valueStr, dataStr, signature);
-    for (int i = 0; i<encoded_len; i++) {
-        printf("%02x", encoded[i]);
-    }
+    uint32_t encoded_len = RlpEncodeForRawTransaction(out, nonceVal, gasPriceVal, gasLimitVal, toStr, valueStr, dataStr, signature, recid);
+    return encoded_len;
 }
 
 
@@ -204,7 +224,7 @@ void Contract::GenerateBytesForUint(char *output, uint32_t value) {
     int digits = sprintf(dummy, "%x", (uint32_t)value);
 
     // fill 0 and copy number to string
-    sprintf(output, "%s", "0x");
+//    sprintf(output, "%s", "0x");
     for(int i = 2; i < 2+64-digits; i++){
         sprintf(output, "%s%s", output, "0");
     }
@@ -222,7 +242,7 @@ void Contract::GenerateBytesForInt(char *output, int32_t value) {
     int digits = sprintf(dummy, "%x", value);
 
     // fill 0 and copy number to string
-    sprintf(output,"%s", "0x");
+    // sprintf(output,"%s", "0x");
     char fill[2];
     if (value >= 0) {
         sprintf(fill, "%s", "0");
@@ -238,7 +258,7 @@ void Contract::GenerateBytesForInt(char *output, int32_t value) {
 void Contract::GenerateBytesForAddress(char *output, char* value) {
     size_t digits = strlen(value) - 2;
 
-    sprintf(output, "%s", "0x");
+    // sprintf(output, "%s", "0x");
     for(int i = 2; i < 2+64-digits; i++){
         sprintf(output, "%s%s", output, "0");
     }
@@ -250,7 +270,7 @@ void Contract::GenerateBytesForAddress(char *output, char* value) {
 void Contract::GenerateBytesForString(char *output, char* value) {
     size_t digits = strlen(value);
 
-    sprintf(output, "%s%s", output, "0x");
+    // sprintf(output, "%s%s", output, "0x");
     for(int i = 0; i < digits; i++){
         sprintf(output, "%s%x", output, value[i]);
     }
@@ -265,7 +285,7 @@ void Contract::GenerateBytesForBytes(char *output, char* value, int len) {
     int M = 256;
     char * tmp[4];
     memset(tmp, 0, 4);
-    sprintf(output, "%s%s", output, "0x");
+    // sprintf(output, "%s%s", output, "0x");
     for(int i = 0; i < len; i++){
         sprintf(output, "%s%x", output, value[i]);
     }
@@ -333,82 +353,54 @@ uint32_t Contract::RlpEncode(uint8_t* encoded,
     memcpy(encoded+p, outputData, lenOutputData);
     p += lenOutputData;
 
+#if 0
     printf("\nRLP encoded--------\n ");
     printf("\nlength : %d\n", p);
     for (int i = 0; i<p; i++) {
         printf("%02x ", i, encoded[i]);
     }
+#endif
 
     return (uint32_t)p;
-
 }
 
+void Contract::Sign(uint8_t* hash, uint8_t* sig, int* recid) {
+    secp256k1_nonce_function noncefn = secp256k1_nonce_function_rfc6979;
+    void* data_ = NULL;
 
-#define SHA256_BLOCK_LENGTH  64
-#define SHA256_DIGEST_LENGTH 32
-
-typedef struct SHA256_CTX {
-    uint32_t	state[8];
-    uint64_t	bitcount;
-    uint8_t	buffer[SHA256_BLOCK_LENGTH];
-} SHA256_CTX;
-
-typedef struct SHA256_HashContext {
-    uECC_HashContext uECC;
-    br_sha256_context ctx;
-} SHA256_HashContext;
-
-static void init_SHA256(const uECC_HashContext *base) {
-    SHA256_HashContext *context = (SHA256_HashContext *)base;
-    br_sha256_init(&context->ctx);
-}
-
-static void update_SHA256(const uECC_HashContext *base,
-                          const uint8_t *message,
-                          unsigned message_size) {
-    SHA256_HashContext *context = (SHA256_HashContext *)base;
-    br_sha256_update(&context->ctx, message, message_size);
-}
-
-static void finish_SHA256(const uECC_HashContext *base, uint8_t *hash_result) {
-    SHA256_HashContext *context = (SHA256_HashContext *)base;
-    br_sha256_out(&context->ctx, hash_result);
-}
-
-void Contract::Sign(uint8_t* hash, uint8_t* sig) {
-    uint8_t tmp[2 * SHA256_DIGEST_LENGTH + SHA256_BLOCK_LENGTH];
-    SHA256_HashContext ctx = {{
-                                      &init_SHA256,
-                                      &update_SHA256,
-                                      &finish_SHA256,
-                                      SHA256_BLOCK_LENGTH,
-                                      SHA256_DIGEST_LENGTH,
-                                      tmp
-                              }};
-
-    const struct uECC_Curve_t * curve;
-    curve = uECC_secp256k1();
-
-    if (!uECC_sign_deterministic(privateKey, hash, sizeof(hash), &ctx.uECC, sig, curve)) {
-        printf("uECC_sign() failed\n");
+    secp256k1_ecdsa_recoverable_signature signature;
+    memset(&signature, 0, sizeof(signature));
+    if (secp256k1_ecdsa_sign_recoverable(ctx, &signature, hash,  privateKey, noncefn, data_) == 0) {
+        return;
     }
+
+    secp256k1_ecdsa_recoverable_signature_serialize_compact(ctx, &sig[0], &recid[0], &signature);
+
+#if 0
+    printf("\nhash--------\n ");
+    for (int i = 0; i<32; i++) {
+        printf("%02x ", hash[i]);
+    }
+    printf("\npriv--------\n ");
+    for (int i = 0; i<32; i++) {
+        printf("%02x ", privateKey[i]);
+    }
+    printf("\nsignature--------\n ");
+    for (int i = 0; i<64; i++) {
+        printf("%02x ", sig[i]);
+    }
+#endif
 }
 
 uint32_t Contract::RlpEncodeForRawTransaction(uint8_t* encoded,
                              uint32_t nonceVal, uint32_t gasPriceVal, uint32_t  gasLimitVal,
-                             uint8_t* toStr, uint8_t* valueStr, uint8_t* dataStr, uint8_t* sig) {
+                             uint8_t* toStr, uint8_t* valueStr, uint8_t* dataStr, uint8_t* sig, uint8_t recid) {
     uint8_t nonce[4];
-    uint32_t lenNonce = Util::ConvertNumberToUintArray(nonce, nonceVal);
     uint8_t gasPrice[4];
-    uint32_t lenGasPrice = Util::ConvertNumberToUintArray(gasPrice, gasPriceVal);
     uint8_t gasLimit[4];
-    uint32_t lenGasLimit = Util::ConvertNumberToUintArray(gasLimit, gasLimitVal);
     uint8_t to[20];
-    uint32_t lenTo = Util::ConvertStringToUintArray(to, toStr);
     uint8_t value[128];
-    uint32_t lenValue = Util::ConvertStringToUintArray(value, valueStr);
     uint8_t data[128];
-    uint32_t lenData = Util::ConvertStringToUintArray(data, dataStr);
 
     uint8_t outputNonce[8];
     uint8_t outputGasPrice[8];
@@ -423,6 +415,13 @@ uint32_t Contract::RlpEncodeForRawTransaction(uint8_t* encoded,
     uint32_t lenOutputValue;
     uint32_t lenOutputData;
 
+    uint32_t lenNonce = Util::ConvertNumberToUintArray(nonce, nonceVal);
+    uint32_t lenGasPrice = Util::ConvertNumberToUintArray(gasPrice, gasPriceVal);
+    uint32_t lenGasLimit = Util::ConvertNumberToUintArray(gasLimit, gasLimitVal);
+    uint32_t lenTo = Util::ConvertStringToUintArray(to, toStr);
+    uint32_t lenValue = Util::ConvertStringToUintArray(value, valueStr);
+    uint32_t lenData = Util::ConvertStringToUintArray(data, dataStr);
+
     lenOutputNonce = Util::RlpEncodeItem(outputNonce, nonce, (uint32_t)lenNonce);
     lenOutputGasPrice = Util::RlpEncodeItem(outputGasPrice, gasPrice, (uint32_t)lenGasPrice);
     lenOutputGasLimit = Util::RlpEncodeItem(outputGasLimit, gasLimit, (uint32_t)lenGasLimit);
@@ -434,7 +433,7 @@ uint32_t Contract::RlpEncodeForRawTransaction(uint8_t* encoded,
     memcpy(R, sig, 32);
     uint8_t S[32];
     memcpy(S, sig+32, 32);
-    uint8_t V[1] = {0x1b};
+    uint8_t V[1] = {(uint8_t)(recid+27)};
     uint8_t outputR[33];
     uint8_t outputS[33];
     uint8_t outputV[1];
@@ -446,6 +445,31 @@ uint32_t Contract::RlpEncodeForRawTransaction(uint8_t* encoded,
     lenOutputS = Util::RlpEncodeItem(outputS, S, 32);
     lenOutputV = Util::RlpEncodeItem(outputV, V, 1);
 
+#if 0
+    printf("\noutputNonce--------\n ");
+    for (int i = 0; i<lenOutputNonce; i++) {
+        printf("%02x ", outputNonce[i]);
+    }
+    printf("\noutputGasPrice--------\n ");
+    for (int i = 0; i<lenOutputGasPrice; i++) {
+        printf("%02x ", outputGasPrice[i]);
+    }
+    printf("\noutputGasLimit--------\n ");
+    for (int i = 0; i<lenOutputGasLimit; i++) {
+        printf("%02x ", outputGasLimit[i]);
+    }
+    printf("\noutputTo--------\n ");
+    for (int i = 0; i<lenOutputTo; i++) {
+        printf("%02x ", outputTo[i]);
+    }
+    printf("\noutputValue--------\n ");
+    for (int i = 0; i<lenOutputValue; i++) {
+        printf("%02x ", outputValue[i]);
+    }
+    printf("\noutputData--------\n ");
+    for (int i = 0; i<lenOutputData; i++) {
+        printf("%02x ", outputData[i]);
+    }
     printf("\nR--------\n ");
     for (int i = 0; i<lenOutputR; i++) {
         printf("%02x ", outputR[i]);
@@ -454,10 +478,12 @@ uint32_t Contract::RlpEncodeForRawTransaction(uint8_t* encoded,
     for (int i = 0; i<lenOutputS; i++) {
         printf("%02x ", outputS[i]);
     }
-    printf("\nV--------\n ");
+    printf("\nV[%d]--------\n ", lenOutputV);
     for (int i = 0; i<lenOutputV; i++) {
         printf("%02x ", outputV[i]);
     }
+    printf("\n");
+#endif
 
     uint32_t tx_len = 0;
     tx_len = Util::RlpEncodeWholeHeader(encoded,
@@ -489,10 +515,6 @@ uint32_t Contract::RlpEncodeForRawTransaction(uint8_t* encoded,
     p += lenOutputR;
     memcpy(encoded+p, outputS, lenOutputS);
     p += lenOutputS;
-    printf("\nGenerated Transaction--------\n ");
-    for (int i = 0; i<p; i++) {
-        printf("%02x", encoded[i]);
-    }
 
     return (uint32_t)p;
 }

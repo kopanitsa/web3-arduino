@@ -188,25 +188,22 @@ void testEth2() {
 }
 
 void testEth3() {
-    // send raw transaction
     char result[128];
     memset(result, 0, 128);
-    uint8_t data[] = {0x31,0x32,0x33};
-    web3.EthSendSignedTransaction(data, 3, result);
-    USE_SERIAL.println("EthSendSignedTransaction");
-    USE_SERIAL.println(result);
 
-    // sign transaction
-    Contract contract(&web3, "0x018968e41da1364e328499613a7e5a22904ad513");
-    contract.setPrivateKey(<your_private_key>);
-    uint32_t nonceVal = (uint32_t)web3.EthGetTransactionCount((char *)"0xd7049ea6f47ef848c0ad570dba618a9f6e4eb25c");
-    uint32_t gasPriceVal = 2000000000;
+    Contract contract(&web3, "0xe759aab0343e7d4c9e23ac5760a12ed9d9af4421");
+    contract.setPrivateKey((uint8_t*)privateKey);
+    uint32_t nonceVal = (uint32_t)web3.EthGetTransactionCount((char *)"0xd7049ea6f47ef848C0Ad570dbA618A9f6e4Eb25C");
+
+    uint32_t gasPriceVal = 141006540;
     uint32_t  gasLimitVal = 3000000;
-    uint8_t toStr[] = "e759aab0343e7d4c9e23ac5760a12ed9d9af4421";
-    uint8_t valueStr[] = "0x10";
-    uint8_t dataStr[] = "0x60fe47b10000000000000000000000000000000000000000000000000000000000000064";
-    contract.SetupTransaction(nonceVal, gasLimitVal, gasLimitVal, toStr, valueStr, dataStr);
-
+    uint8_t toStr[] = "0xe759aab0343e7d4c9e23ac5760a12ed9d9af4421";
+    uint8_t valueStr[] = "0x00";
+    uint8_t dataStr[100];
+    memset(dataStr, 0, 100);
+    contract.SetupContractData((char*)dataStr, "set(uint256)", 123);
+    contract.SendTransaction((uint8_t *) result,
+                             nonceVal, gasPriceVal, gasLimitVal, toStr, valueStr, dataStr);
 }
 
 void loop() {

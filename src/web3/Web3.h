@@ -2,8 +2,8 @@
 // Created by Okada, Takahiro on 2018/02/04.
 //
 
-#ifndef SMARTOUTLET_WEB3_H
-#define SMARTOUTLET_WEB3_H
+#ifndef ARDUONO_WEB3_WEB3_H
+#define ARDUONO_WEB3_WEB3_H
 
 #include "stdint.h"
 
@@ -40,4 +40,4 @@ private:
 
 };
 
-#endif //SMARTOUTLET_WEB3_H
+#endif //ARDUONO_WEB3_WEB3_H

@@ -101,13 +101,15 @@ uint32_t Util::ConvertNumberToUintArray(uint8_t *str, uint32_t val) {
     return ret+1;
 }
 
-uint32_t Util::ConvertStringToUintArray(uint8_t *out, uint8_t *in) {
+uint32_t Util::ConvertStringToUintArray(uint8_t *out, const uint8_t *in) {
     uint32_t ret = 0;
+    uint8_t tmp[256];
+    strcpy((char *)tmp, (char *)in);
 
     // remove "0x"
-    char * ptr = strtok((char*)in, "x");
+    char * ptr = strtok((char*)tmp, "x");
     if (strlen(ptr)!=1) {
-        ptr = (char *)in;
+        ptr = (char *)tmp;
     } else {
         ptr = strtok(NULL, "x");
     }

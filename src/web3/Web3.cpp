@@ -216,28 +216,28 @@ void Web3::EthCall(char* from, char* to, long gas, long gasPrice,
 void Web3::EthSendSignedTransaction(uint8_t* data, uint32_t dataLen, char* output) {
     // TODO use gas, gasprice and value
     int ret;
-    char input[256]; // note: if sizes of input and param are 1024, it crashes.
-    char tmp[256];
-    char param[256];
+    Serial.printf("datalen: %d", dataLen);
+    char input[dataLen*2+64]; // note: if sizes of input and param are 1024, it crashes.
+    char tmp[dataLen*2+10];
+    char param[dataLen*2+10];
     memset(input,0,256);
     memset(tmp,0,256);
     memset(param,0,256);
     Util::BufToString(tmp, data, dataLen);
     sprintf(param, "[\"%s\"]", tmp);
-    Serial.printf("data: %s", param);
+    generateJson(input, "eth_sendRawTransaction", param);
 
-    generateJson(input, "eth_SendRawTransaction", param);
+    LOG("-- sendRawTransaction --------");
+    LOG(input);
+
     exec(input, output);
 }
-
 
 // -------------------------------
 // Private
 
 void Web3::generateJson(char* out, const char* method, const char* params) {
     sprintf(out, "{\"jsonrpc\":\"2.0\",\"method\":\"%s\",\"params\":%s,\"id\":0}", method, params);
-//    LOG("generated json:");
-//    LOG(out);
 }
 
 void Web3::exec(const char* data, char* result) {

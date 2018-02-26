@@ -2,8 +2,8 @@
 // Created by Okada, Takahiro on 2018/02/04.
 //
 
-#ifndef SMARTOUTLET_LOG_H
-#define SMARTOUTLET_LOG_H
+#ifndef ARDUONO_WEB3_LOG_H
+#define ARDUONO_WEB3_LOG_H
 
 #define DEBUGLOG
 
@@ -13,4 +13,4 @@ public:
     void println(const char* s);
 };
 
-#endif //SMARTOUTLET_LOG_H
+#endif //ARDUONO_WEB3_LOG_H

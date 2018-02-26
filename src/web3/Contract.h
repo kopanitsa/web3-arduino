@@ -2,8 +2,8 @@
 // Created by Okada, Takahiro on 2018/02/05.
 //
 
-#ifndef SMARTOUTLET_CONTRACT_H
-#define SMARTOUTLET_CONTRACT_H
+#ifndef ARDUONO_WEB3_CONTRACT_H
+#define ARDUONO_WEB3_CONTRACT_H
 
 #include "Arduino.h"
 #include "Log.h"
@@ -25,8 +25,9 @@ public:
     void setPrivateKey(uint8_t* key);
     void SetupContractData(char *out, const char *func, ...);
     void Call(char* param);
-    void SetupTransaction(uint32_t nonceVal, uint32_t gasPriceVal, uint32_t  gasLimitVal,
-                                    uint8_t* toStr, uint8_t* valueStr, uint8_t* dataStr);
+    void SendTransaction(uint8_t *msg,
+                         uint32_t nonceVal, uint32_t gasPriceVal, uint32_t gasLimitVal,
+                         uint8_t *toStr, uint8_t *valueStr, uint8_t *dataStr);
 
 private:
     Log Debug;
@@ -44,18 +45,19 @@ private:
     void GenerateBytesForString(char *output, char *value);
     void GenerateBytesForBytes(char *output, char* value, int len);
 
-    void SetupTransactionImpl1(uint8_t* signature, uint32_t nonceVal, uint32_t gasPriceVal, uint32_t  gasLimitVal,
+    void SetupTransactionImpl1(uint8_t* signature, int* recid, uint32_t nonceVal, uint32_t gasPriceVal, uint32_t  gasLimitVal,
                                          uint8_t* toStr, uint8_t* valueStr, uint8_t* dataStr);
-    void SetupTransactionImpl2(uint32_t nonceVal, uint32_t gasPriceVal, uint32_t  gasLimitVal,
-                                         uint8_t* toStr, uint8_t* valueStr, uint8_t* dataStr, uint8_t* signature);
+    uint32_t SetupTransactionImpl2(uint8_t* out,
+                                             uint32_t nonceVal, uint32_t gasPriceVal, uint32_t  gasLimitVal,
+                                             uint8_t* toStr, uint8_t* valueStr, uint8_t* dataStr, uint8_t* signature, uint8_t recid);
     uint32_t RlpEncode(uint8_t* encoded,
                        uint32_t nonceVal, uint32_t gasPriceVal, uint32_t  gasLimitVal,
                        uint8_t* toStr, uint8_t* valueStr, uint8_t* dataStr);
     uint32_t RlpEncodeForRawTransaction(uint8_t* encoded,
                                         uint32_t nonceVal, uint32_t gasPriceVal, uint32_t  gasLimitVal,
-                                        uint8_t* toStr, uint8_t* valueStr, uint8_t* dataStr, uint8_t* sig);
-    void Sign(uint8_t* hash, uint8_t* sig);
+                                        uint8_t* toStr, uint8_t* valueStr, uint8_t* dataStr, uint8_t* sig, uint8_t recid);
+    void Sign(uint8_t* hash, uint8_t* sig, int* recid);
 };
 
 
-#endif //SMARTOUTLET_CONTRACT_H
+#endif //ARDUONO_WEB3_CONTRACT_H

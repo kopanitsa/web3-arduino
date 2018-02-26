@@ -51,4 +51,4 @@ add_custom_target(
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-add_executable(${PROJECT_NAME} ${SRC_LIST} src/SmartPlug.cpp src/Conf.h src/web3/Web3.cpp src/web3/Web3.h src/web3/Log.cpp src/web3/Log.h src/web3/Contract.cpp src/web3/Contract.h)
+add_executable(${PROJECT_NAME} ${SRC_LIST} src/example.cpp src/Conf.h src/web3/Web3.cpp src/web3/Web3.h src/web3/Log.cpp src/web3/Log.h src/web3/Contract.cpp src/web3/Contract.h)
