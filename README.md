@@ -27,12 +27,67 @@
 
 ## Installation
 
-- TBA
+1. download the zip file from `Clone or download` button on Github.
+2. launch Arduino IDE.
+3. `Sketch` -> `Include Library` -> `Add .ZIP file` -> select downloaded zip file.
+4. Then you can use this from Arduino IDE.
 
 ## Example
 
-- TBA
-- `example.cpp` can be useful
+Please refer `examples` directory.
+
+### setup
+
+```
+#define INFURA_HOST "rinkeby.infura.io"
+#define INFURA_PATH "/<YOUR_INFURA_ID>"
+
+Web3 web3(INFURA_HOST, INFURA_PATH);
+```
+
+### call web3 methods
+
+```
+char result[128];
+
+web3.Web3ClientVersion(result);
+USE_SERIAL.println(result);
+
+web3.Web3Sha3("0x68656c6c6f20776f726c64", result);
+USE_SERIAL.println(result);
+```
+
+### `call` to Contract
+
+```
+Contract contract(&web3, CONTRACT_ADDRESS);
+strcpy(contract.options.from, MY_ADDRESS);
+strcpy(contract.options.gasPrice,"2000000000000");
+contract.options.gas = 5000000;
+contract.SetupContractData(result, "get()");
+contract.Call(result);
+USE_SERIAL.println(result);
+```
+
+### `sendTransaction` to Contract
+
+```
+Contract contract(&web3, CONTRACT_ADDRESS);
+contract.SetPrivateKey((uint8_t*)PRIVATE_KEY);
+uint32_t nonceVal = (uint32_t)web3.EthGetTransactionCount((char *)MY_ADDRESS);
+
+uint32_t gasPriceVal = 141006540;
+uint32_t  gasLimitVal = 3000000;
+uint8_t toStr[] = CONTRACT_ADDRESS;
+uint8_t valueStr[] = "0x00";
+uint8_t dataStr[100];
+memset(dataStr, 0, 100);
+contract.SetupContractData((char*)dataStr, "set(uint256)", 123);
+contract.SendTransaction((uint8_t *) result,
+                         nonceVal, gasPriceVal, gasLimitVal, toStr, valueStr, dataStr);
+
+USE_SERIAL.println(result);
+```
 
 ## Dependency
 
