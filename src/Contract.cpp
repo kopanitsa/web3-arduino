@@ -61,9 +61,8 @@ void Contract::SetupContractData(char *out, const char *func, ...) {
     LOG("==============");
 #endif
 
-    // funcの文字列をdecodeして、どの型の引数がいくつあるかを解析
     size_t paramCount = 0;
-    char params[8][20]; // 8個の20文字以内の引数を格納可能
+    char params[8][20];
     memset(params, 0, 20*8);
     char *p;
     char tmp[64];
@@ -120,15 +119,13 @@ void Contract::SetupContractData(char *out, const char *func, ...) {
 }
 
 void Contract::Call(char* param) {
-    char result[512];
-    memset(result, 0, 512);
+    string paramStr = string(param);
+    string from = string(options.from);
     long gasPrice = strtol(options.gasPrice, nullptr, 10);
-    web3->EthCall(options.from
-            ,(char*)contractAddress
-            ,options.gas, gasPrice, (char*)""
-            ,param
-            ,result);
-    LOG(result);
+    string addr = string(contractAddress);
+    string value = "";
+    string result = web3->EthCall(&from, &addr, options.gas, gasPrice, &value, &paramStr);
+    LOG(result.c_str());
 }
 
 void Contract::SendTransaction(uint8_t *output,
@@ -150,8 +147,9 @@ void Contract::SendTransaction(uint8_t *output,
         printf("%02x ", param[i]);
     }
 #endif
-    web3->EthSendSignedTransaction(param, len, (char *)output);
-
+    string paramStr = string((char*)param);
+    string outputStr = web3->EthSendSignedTransaction(&paramStr, len);
+    strcpy((char*)output, outputStr.c_str());
 }
 
 void Contract::SetupTransactionImpl1(uint8_t* signature, int* recid, uint32_t nonceVal, uint32_t gasPriceVal, uint32_t  gasLimitVal,

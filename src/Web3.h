@@ -28,8 +28,8 @@ public:
     long long int EthGetBalance(string* address);
     int EthGetTransactionCount(string* address);
 
-    void EthCall(char* from, char* to, long gas, long gasPrice, char* value, char* data, char* output);
-    void EthSendSignedTransaction(uint8_t* data, uint32_t dataLen, char* output);
+    string EthCall(string* from, string* to, long gas, long gasPrice, string* value, string* data);
+    string EthSendSignedTransaction(string* data, uint32_t dataLen);
 
 private:
     string exec(string* data);

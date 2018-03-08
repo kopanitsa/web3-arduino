@@ -19,7 +19,6 @@ Web3::Web3(string* _host, string* _path) {
     client.setCACert(infura_ca_cert);
     host = _host;
     path = _path;
-
 }
 
 string Web3::Web3ClientVersion() {
@@ -141,37 +140,24 @@ int Web3::EthGetTransactionCount(string* address) {
     return getInt(&output);
 }
 
-void Web3::EthCall(char* from, char* to, long gas, long gasPrice,
-                   char* value, char* data, char* output) {
+string Web3::EthCall(string* from, string* to, long gas, long gasPrice,
+                   string* value, string* data) {
     // TODO use gas, gasprice and value
-    int ret;
-    char input[512]; // note: if sizes of input and param are 1024, it crashes.
-    char param[512];
-    memset(input,0,512);
-    memset(param,0,512);
-    sprintf(param, "[{\"from\":\"%s\",\"to\":\"%s\",\"data\":\"%s\"}, \"latest\"]", from, to, data);
-//    generateJson(input, "eth_call", param);
-//    exec(input, output);
+    string m = "eth_call";
+    string p = "[{\"from\":\"" + *from + "\",\"to\":\""
+               + *to + "\",\"data\":\"" + *data + "\"}, \"latest\"]";
+    string input = generateJson(&m, &p);
+    return exec(&input);
 }
 
-void Web3::EthSendSignedTransaction(uint8_t* data, uint32_t dataLen, char* output) {
-    // TODO use gas, gasprice and value
-    int ret;
-    Serial.printf("datalen: %d", dataLen);
-    char input[dataLen*2+64]; // note: if sizes of input and param are 1024, it crashes.
-    char tmp[dataLen*2+10];
-    char param[dataLen*2+10];
-    memset(input,0,256);
-    memset(tmp,0,256);
-    memset(param,0,256);
-    Util::BufToString(tmp, data, dataLen);
-    sprintf(param, "[\"%s\"]", tmp);
-//    generateJson(input, "eth_sendRawTransaction", param);
-
+string Web3::EthSendSignedTransaction(string* data, uint32_t dataLen) {
+    string m = "eth_sendRawTransaction";
+    string p = "[\"" + *data + "\"]";
+    string input = generateJson(&m, &p);
 #if 0
     LOG(input);
 #endif
-//    exec(input, output);
+    return exec(&input);
 }
 
 // -------------------------------
