@@ -164,14 +164,13 @@ void Contract::SetupTransactionImpl1(uint8_t* signature, int* recid, uint32_t no
     uint32_t encoded_len = RlpEncode(encoded, nonceVal, gasPriceVal, gasLimitVal, toStr, valueStr, dataStr);
 
     // hash
-    char hashedStr[256];
-    memset(hashedStr,0,256);
+    string t = string(tmp);
     Util::BufToString(tmp, encoded, encoded_len);
-    web3->Web3Sha3((char*)tmp, (char*)hashedStr);
+    string hashedStr = web3->Web3Sha3(&t);
 
     // sign
     memset(tmp,0,256);
-    Util::ConvertStringToUintArray((uint8_t*)tmp, (uint8_t*)hashedStr);
+    Util::ConvertStringToUintArray((uint8_t*)tmp, (uint8_t*)hashedStr.c_str());
     Sign((uint8_t*)tmp, signature, recid);
 
 #if 0
@@ -196,9 +195,7 @@ uint32_t Contract::SetupTransactionImpl2(uint8_t* out,
 
 void Contract::GenerateContractBytes(const char* func, char* out) {
     char intmp[128];
-    char outtmp[128];
     memset(intmp, 0, 128);
-    memset(outtmp, 0, 128);
     sprintf(intmp, "0x");
     int i = 0;
     for (int i = 0; i<128; i++) {
@@ -209,8 +206,9 @@ void Contract::GenerateContractBytes(const char* func, char* out) {
         sprintf(intmp, "%s%x", intmp, c);
     }
 
-    web3->Web3Sha3(intmp, outtmp);
-    strncpy(out, outtmp, 10);
+    string in = string(intmp);
+    string outtmp = web3->Web3Sha3(&in);
+    strncpy(out, outtmp.c_str(), 10);
 }
 
 void Contract::GenerateBytesForUint(char *output, uint32_t value) {
