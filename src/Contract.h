@@ -8,6 +8,9 @@
 #include "Arduino.h"
 #include "Log.h"
 #include "Web3.h"
+#include <vector>
+
+using namespace std;
 
 class Contract {
 
@@ -45,16 +48,13 @@ private:
     string GenerateBytesForBytes(const char* value, const int len);
 
     void SetupTransactionImpl1(uint8_t* signature, int* recid, uint32_t nonceVal, uint32_t gasPriceVal, uint32_t  gasLimitVal,
-                                         uint8_t* toStr, uint8_t* valueStr, uint8_t* dataStr);
-    uint32_t SetupTransactionImpl2(uint8_t* out,
-                                             uint32_t nonceVal, uint32_t gasPriceVal, uint32_t  gasLimitVal,
-                                             uint8_t* toStr, uint8_t* valueStr, uint8_t* dataStr, uint8_t* signature, uint8_t recid);
-    uint32_t RlpEncode(uint8_t* encoded,
-                       uint32_t nonceVal, uint32_t gasPriceVal, uint32_t  gasLimitVal,
-                       uint8_t* toStr, uint8_t* valueStr, uint8_t* dataStr);
-    uint32_t RlpEncodeForRawTransaction(uint8_t* encoded,
-                                        uint32_t nonceVal, uint32_t gasPriceVal, uint32_t  gasLimitVal,
-                                        uint8_t* toStr, uint8_t* valueStr, uint8_t* dataStr, uint8_t* sig, uint8_t recid);
+                                         string* toStr, string* valueStr, string* dataStr);
+    vector<uint8_t> RlpEncode(
+            uint32_t nonceVal, uint32_t gasPriceVal, uint32_t  gasLimitVal,
+            string* toStr, string* valueStr, string* dataStr);
+    vector<uint8_t> RlpEncodeForRawTransaction(
+            uint32_t nonceVal, uint32_t gasPriceVal, uint32_t  gasLimitVal,
+            string* toStr, string* valueStr, string* dataStr, uint8_t* sig, uint8_t recid);
     void Sign(uint8_t* hash, uint8_t* sig, int* recid);
 };
 

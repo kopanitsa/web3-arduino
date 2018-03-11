@@ -214,6 +214,10 @@ vector<uint8_t> Util::ConvertCharStrToVector(const uint8_t *in) {
     return out;
 }
 
+vector<uint8_t> Util::ConvertStringToVector(const string* str) {
+    return ConvertCharStrToVector((uint8_t*)(str->c_str()));
+}
+
 uint32_t Util::ConvertCharStrToUintArray(uint8_t *out, const uint8_t *in) {
     uint32_t ret = 0;
     uint8_t tmp[256];
@@ -259,3 +263,20 @@ void Util::BufToCharStr(char* str, const uint8_t* buf, uint32_t len) {
     }
 }
 
+void Util::VectorToCharStr(char* str, const vector<uint8_t> buf) {
+    sprintf(str, "0x");
+    for (int i = 0; i < buf.size(); i++) {
+        sprintf(str, "%s%02x", str, buf[i]);
+    }
+}
+
+string Util::VectorToString(const vector<uint8_t> buf) {
+    string ret = "0x";
+    for (int i = 0; i < buf.size(); i++) {
+        char v[3];
+        memset(v, 0, sizeof(v));
+        sprintf(v, "%02x", buf[i]);
+        ret = ret + string(v);
+    }
+    return ret;
+}

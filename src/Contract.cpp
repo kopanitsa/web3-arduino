@@ -13,6 +13,8 @@
 #include "secp256k1/src/secp256k1_c.h"
 #include "secp256k1/src/module/recovery/main_impl.h"
 
+#define SIGNATURE_LENGTH 64
+
 static secp256k1_context *ctx;
 
 /**
@@ -125,53 +127,40 @@ string Contract::Call(const string* param) {
     const string from = string(options.from);
     const long gasPrice = strtol(options.gasPrice, nullptr, 10);
     const string value = "";
+#if 0
     printf("from: %s\n", from.c_str());
     printf("to: %s\n", contractAddress->c_str());
     printf("value: %s\n", value.c_str());
     printf("data: %s\n", param->c_str());
     printf(param->c_str());
+#endif
     string result = web3->EthCall(&from, contractAddress, options.gas, gasPrice, &value, param);
     return result;
 }
 
 string Contract::SendTransaction(uint32_t nonceVal, uint32_t gasPriceVal, uint32_t gasLimitVal,
                                  string *toStr, string *valueStr, string *dataStr) {
-    // TODO ここのmagic numberけす
-    uint8_t param[256];
-    memset(param,0,256);
-
-    // TODO ここのmagic numberは64でfix
-    uint8_t signature[64];
-    memset(signature,0,64);
-    int recid[1] = {1};
+    uint8_t signature[SIGNATURE_LENGTH];
+    memset(signature,0,SIGNATURE_LENGTH);
+    int recid[1] = {0};
     SetupTransactionImpl1(signature, recid, nonceVal, gasPriceVal, gasLimitVal,
-                          (uint8_t*)(toStr->c_str()),
-                          (uint8_t*)(valueStr->c_str()),
-                          (uint8_t*)(dataStr->c_str()));
-    uint32_t len = SetupTransactionImpl2(param, nonceVal, gasPriceVal, gasLimitVal,
-                                         (uint8_t*)(toStr->c_str()),
-                                         (uint8_t*)(valueStr->c_str()),
-                                         (uint8_t*)(dataStr->c_str()),
+                          toStr, valueStr, dataStr);
+    vector<uint8_t>param = RlpEncodeForRawTransaction(nonceVal, gasPriceVal, gasLimitVal,
+                                         toStr, valueStr, dataStr,
                                          signature, recid[0]);
-
-
-    // TODO ここのmagic numberけす
-    char tmp[512];
-    memset(tmp,0,512);
-    Util::BufToCharStr(tmp, param, len);
-    string paramStr = string(tmp);
+    string paramStr = Util::VectorToString(param);
 
 #if 0
     printf("\nGenerated Transaction--------\n ");
-    printf("len:%d\n", (int)len);
-    for (int i = 0; i<len; i++) {
+    printf("len:%d\n", (int)param.size());
+    for (int i = 0; i<param.size(); i++) {
         printf("%02x ", param[i]);
     }
     printf("\nparamStr: %s\n", paramStr.c_str());
     printf("\n\n");
 #endif
 
-    return web3->EthSendSignedTransaction(&paramStr, len);
+    return web3->EthSendSignedTransaction(&paramStr, param.size());
 
 }
 
@@ -180,25 +169,18 @@ string Contract::SendTransaction(uint32_t nonceVal, uint32_t gasPriceVal, uint32
  * */
 
 void Contract::SetupTransactionImpl1(uint8_t* signature, int* recid, uint32_t nonceVal, uint32_t gasPriceVal, uint32_t  gasLimitVal,
-                                uint8_t* toStr, uint8_t* valueStr, uint8_t* dataStr) {
-    // TODO ここのmagic numberけす
-    // encode
-    uint8_t encoded[256];
-    memset(encoded,0,256);
-    char tmp[256];
-    memset(tmp,0,256);
-    uint32_t encoded_len = RlpEncode(encoded, nonceVal, gasPriceVal, gasLimitVal, toStr, valueStr, dataStr);
+                                string* toStr, string* valueStr, string* dataStr) {
+    vector<uint8_t> encoded = RlpEncode(nonceVal, gasPriceVal, gasLimitVal, toStr, valueStr, dataStr);
 
     // hash
-    Util::BufToCharStr(tmp, encoded, encoded_len);
-    string t = string(tmp);
+    string t = Util::VectorToString(encoded);
     string hashedStr = web3->Web3Sha3(&t);
 
     // sign
-    // TODO ここのmagic numberけす
-    memset(tmp,0,256);
-    Util::ConvertCharStrToUintArray((uint8_t*)tmp, (uint8_t*)hashedStr.c_str());
-    Sign((uint8_t*)tmp, signature, recid);
+    char hash[hashedStr.size()];
+    memset(hash, 0, sizeof(hash));
+    Util::ConvertCharStrToUintArray((uint8_t*)hash, (uint8_t*)hashedStr.c_str());
+    Sign((uint8_t*)hash, signature, recid);
 
 #if 0
     printf("\nhash_input : %s\n", tmp);
@@ -209,16 +191,6 @@ void Contract::SetupTransactionImpl1(uint8_t* signature, int* recid, uint32_t no
     }
 #endif
 }
-
-uint32_t Contract::SetupTransactionImpl2(uint8_t* out,
-                                     uint32_t nonceVal, uint32_t gasPriceVal, uint32_t  gasLimitVal,
-                                     uint8_t* toStr, uint8_t* valueStr, uint8_t* dataStr, uint8_t* signature, uint8_t recid) {
-
-    // generate data
-    uint32_t encoded_len = RlpEncodeForRawTransaction(out, nonceVal, gasPriceVal, gasLimitVal, toStr, valueStr, dataStr, signature, recid);
-    return encoded_len;
-}
-
 
 string Contract::GenerateContractBytes(const string* func) {
     string in = "0x";
@@ -313,64 +285,38 @@ string Contract::GenerateBytesForBytes(const char* value, const int len) {
     return string(output);
 }
 
-uint32_t Contract::RlpEncode(uint8_t* encoded,
+vector<uint8_t> Contract::RlpEncode(
                          uint32_t nonceVal, uint32_t gasPriceVal, uint32_t  gasLimitVal,
-                         uint8_t* toStr, uint8_t* valueStr, uint8_t* dataStr) {
-    uint8_t nonce[4];
-    uint32_t lenNonce = Util::ConvertNumberToUintArray(nonce, nonceVal);
-    uint8_t gasPrice[4];
-    uint32_t lenGasPrice = Util::ConvertNumberToUintArray(gasPrice, gasPriceVal);
-    uint8_t gasLimit[4];
-    uint32_t lenGasLimit = Util::ConvertNumberToUintArray(gasLimit, gasLimitVal);
-    uint8_t to[20];
-    uint32_t lenTo = Util::ConvertCharStrToUintArray(to, toStr);
-    // TODO ここのmagic numberけす
-    uint8_t value[128];
-    uint32_t lenValue = Util::ConvertCharStrToUintArray(value, valueStr);
-    // TODO ここのmagic numberけす
-    uint8_t data[128];
-    uint32_t lenData = Util::ConvertCharStrToUintArray(data, dataStr);
+                         string* toStr, string* valueStr, string* dataStr) {
+    vector<uint8_t> nonce = Util::ConvertNumberToVector(nonceVal);
+    vector<uint8_t> gasPrice = Util::ConvertNumberToVector(gasPriceVal);
+    vector<uint8_t> gasLimit = Util::ConvertNumberToVector(gasLimitVal);
+    vector<uint8_t> to = Util::ConvertStringToVector(toStr);
+    vector<uint8_t> value = Util::ConvertStringToVector(valueStr);
+    vector<uint8_t> data = Util::ConvertStringToVector(dataStr);
 
-    uint8_t outputNonce[8];
-    uint8_t outputGasPrice[8];
-    uint8_t outputGasLimit[8];
-    uint8_t outputTo[32];
-    uint8_t outputValue[8];
-    uint8_t outputData[128];
-    uint32_t lenOutputNonce;
-    uint32_t lenOutputGasPrice;
-    uint32_t lenOutputGasLimit;
-    uint32_t lenOutputTo;
-    uint32_t lenOutputValue;
-    uint32_t lenOutputData;
+    vector<uint8_t> outputNonce = Util::RlpEncodeItemWithVector(nonce);
+    vector<uint8_t> outputGasPrice = Util::RlpEncodeItemWithVector(gasPrice);
+    vector<uint8_t> outputGasLimit = Util::RlpEncodeItemWithVector(gasLimit);
+    vector<uint8_t> outputTo = Util::RlpEncodeItemWithVector(to);
+    vector<uint8_t> outputValue = Util::RlpEncodeItemWithVector(value);
+    vector<uint8_t> outputData = Util::RlpEncodeItemWithVector(data);
 
-    lenOutputNonce = Util::RlpEncodeItem(outputNonce, nonce, (uint32_t)lenNonce);
-    lenOutputGasPrice = Util::RlpEncodeItem(outputGasPrice, gasPrice, (uint32_t)lenGasPrice);
-    lenOutputGasLimit = Util::RlpEncodeItem(outputGasLimit, gasLimit, (uint32_t)lenGasLimit);
-    lenOutputTo = Util::RlpEncodeItem(outputTo, to, (uint32_t)lenTo);
-    lenOutputValue = Util::RlpEncodeItem(outputValue, value, (uint32_t)lenValue);
-    lenOutputData = Util::RlpEncodeItem(outputData, data, (uint32_t)lenData);
+    vector<uint8_t> encoded = Util::RlpEncodeWholeHeaderWithVector(
+            outputNonce.size()+
+            outputGasPrice.size()+
+            outputGasLimit.size()+
+            outputTo.size()+
+            outputValue.size()+
+            outputData.size());
 
-    uint32_t total_len = Util::RlpEncodeWholeHeader(encoded,
-                                           lenOutputNonce+
-                                           lenOutputGasPrice+
-                                           lenOutputGasLimit+
-                                           lenOutputTo+
-                                           lenOutputValue+
-                                           lenOutputData);
-    int p = total_len;
-    memcpy(encoded+p, outputNonce, lenOutputNonce);
-    p += lenOutputNonce;
-    memcpy(encoded+p, outputGasPrice, lenOutputGasPrice);
-    p += lenOutputGasPrice;
-    memcpy(encoded+p, outputGasLimit, lenOutputGasLimit);
-    p += lenOutputGasLimit;
-    memcpy(encoded+p, outputTo, lenOutputTo);
-    p += lenOutputTo;
-    memcpy(encoded+p, outputValue, lenOutputValue);
-    p += lenOutputValue;
-    memcpy(encoded+p, outputData, lenOutputData);
-    p += lenOutputData;
+
+    encoded.insert(encoded.end(), outputNonce.begin(), outputNonce.end());
+    encoded.insert(encoded.end(), outputGasPrice.begin(), outputGasPrice.end());
+    encoded.insert(encoded.end(), outputGasLimit.begin(), outputGasLimit.end());
+    encoded.insert(encoded.end(), outputTo.begin(), outputTo.end());
+    encoded.insert(encoded.end(), outputValue.begin(), outputValue.end());
+    encoded.insert(encoded.end(), outputData.begin(), outputData.end());
 
 #if 0
     printf("\nRLP encoded--------\n ");
@@ -380,7 +326,7 @@ uint32_t Contract::RlpEncode(uint8_t* encoded,
     }
 #endif
 
-    return (uint32_t)p;
+    return encoded;
 }
 
 void Contract::Sign(uint8_t* hash, uint8_t* sig, int* recid) {
@@ -411,20 +357,20 @@ void Contract::Sign(uint8_t* hash, uint8_t* sig, int* recid) {
 #endif
 }
 
-uint32_t Contract::RlpEncodeForRawTransaction(uint8_t* xxx,
+vector<uint8_t> Contract::RlpEncodeForRawTransaction(
                              uint32_t nonceVal, uint32_t gasPriceVal, uint32_t  gasLimitVal,
-                             uint8_t* toStr, uint8_t* valueStr, uint8_t* dataStr, uint8_t* sig, uint8_t recid) {
+                             string* toStr, string* valueStr, string* dataStr, uint8_t* sig, uint8_t recid) {
 
     vector<uint8_t> signature;
-    for (int i=0; i<64; i++) {
+    for (int i=0; i<SIGNATURE_LENGTH; i++) {
         signature.push_back(sig[i]);
     }
     vector<uint8_t> nonce = Util::ConvertNumberToVector(nonceVal);
     vector<uint8_t> gasPrice = Util::ConvertNumberToVector(gasPriceVal);
     vector<uint8_t> gasLimit = Util::ConvertNumberToVector(gasLimitVal);
-    vector<uint8_t> to = Util::ConvertCharStrToVector(toStr);
-    vector<uint8_t> value = Util::ConvertCharStrToVector(valueStr);
-    vector<uint8_t> data = Util::ConvertCharStrToVector(dataStr);
+    vector<uint8_t> to = Util::ConvertStringToVector(toStr);
+    vector<uint8_t> value = Util::ConvertStringToVector(valueStr);
+    vector<uint8_t> data = Util::ConvertStringToVector(dataStr);
 
     vector<uint8_t> outputNonce = Util::RlpEncodeItemWithVector(nonce);
     vector<uint8_t> outputGasPrice = Util::RlpEncodeItemWithVector(gasPrice);
@@ -434,11 +380,11 @@ uint32_t Contract::RlpEncodeForRawTransaction(uint8_t* xxx,
     vector<uint8_t> outputData = Util::RlpEncodeItemWithVector(data);
 
     vector<uint8_t> R;
-    R.insert(R.end(), signature.begin(), signature.begin()+32);
+    R.insert(R.end(), signature.begin(), signature.begin()+(SIGNATURE_LENGTH/2));
     vector<uint8_t> S;
-    S.insert(S.end(), signature.begin()+32, signature.end());
+    S.insert(S.end(), signature.begin()+(SIGNATURE_LENGTH/2), signature.end());
     vector<uint8_t> V;
-    V.push_back((uint8_t)(recid+27));
+    V.push_back((uint8_t)(recid+27)); // 27 is a magic number for Ethereum spec
     vector<uint8_t> outputR = Util::RlpEncodeItemWithVector(R);
     vector<uint8_t> outputS = Util::RlpEncodeItemWithVector(S);
     vector<uint8_t> outputV = Util::RlpEncodeItemWithVector(V);
@@ -465,7 +411,6 @@ uint32_t Contract::RlpEncodeForRawTransaction(uint8_t* xxx,
     printf("\n");
 #endif
 
-    uint32_t tx_len = 0;
     vector<uint8_t> encoded = Util::RlpEncodeWholeHeaderWithVector(
                                         outputNonce.size()+
                                         outputGasPrice.size()+
@@ -487,9 +432,5 @@ uint32_t Contract::RlpEncodeForRawTransaction(uint8_t* xxx,
     encoded.insert(encoded.end(), outputR.begin(), outputR.end());
     encoded.insert(encoded.end(), outputS.begin(), outputS.end());
 
-    for (int i=0; i<encoded.size(); i++) {
-        xxx[i] = encoded[i];
-    }
-
-    return (uint32_t)encoded.size();
+    return encoded;
 }
