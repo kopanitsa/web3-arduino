@@ -139,7 +139,7 @@ uint8_t Util::HexToInt(uint8_t s) {
     return ret;
 }
 
-void Util::BufToString(char* str, const uint8_t* buf, uint32_t len) {
+void Util::BufToCharStr(char* str, const uint8_t* buf, uint32_t len) {
     sprintf(str, "0x");
     for (int i = 0; i < len; i++) {
         sprintf(str, "%s%02x", str, buf[i]);

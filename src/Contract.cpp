@@ -14,6 +14,10 @@
 
 static secp256k1_context *ctx;
 
+/**
+ * Public functions
+ * */
+
 Contract::Contract(Web3* _web3, const string* address) {
     web3 = _web3;
     contractAddress = address;
@@ -129,29 +133,47 @@ string Contract::Call(const string* param) {
     return result;
 }
 
-void Contract::SendTransaction(uint8_t *output,
-                               uint32_t nonceVal, uint32_t gasPriceVal, uint32_t gasLimitVal,
-                               uint8_t *toStr, uint8_t *valueStr, uint8_t *dataStr) {
+string Contract::SendTransaction(uint32_t nonceVal, uint32_t gasPriceVal, uint32_t gasLimitVal,
+                                 string *toStr, string *valueStr, string *dataStr) {
     uint8_t param[256];
     memset(param,0,256);
 
     uint8_t signature[64];
     memset(signature,0,64);
     int recid[1] = {1};
-    SetupTransactionImpl1(signature, recid, nonceVal, gasPriceVal, gasLimitVal, toStr, valueStr, dataStr);
-    uint32_t len = SetupTransactionImpl2(param, nonceVal, gasPriceVal, gasLimitVal, toStr, valueStr, dataStr, signature, recid[0]);
+    SetupTransactionImpl1(signature, recid, nonceVal, gasPriceVal, gasLimitVal,
+                          (uint8_t*)(toStr->c_str()),
+                          (uint8_t*)(valueStr->c_str()),
+                          (uint8_t*)(dataStr->c_str()));
+    uint32_t len = SetupTransactionImpl2(param, nonceVal, gasPriceVal, gasLimitVal,
+                                         (uint8_t*)(toStr->c_str()),
+                                         (uint8_t*)(valueStr->c_str()),
+                                         (uint8_t*)(dataStr->c_str()),
+                                         signature, recid[0]);
 
-#if 0
+
+    char tmp[512];
+    memset(tmp,0,512);
+    Util::BufToCharStr(tmp, param, len);
+    string paramStr = string(tmp);
+
+#if 1
     printf("\nGenerated Transaction--------\n ");
-    printf("len:%d", (int)len);
+    printf("len:%d\n", (int)len);
     for (int i = 0; i<len; i++) {
         printf("%02x ", param[i]);
     }
+    printf("\nparamStr: %s\n", paramStr.c_str());
+    printf("\n\n");
 #endif
-    string paramStr = string((char*)param);
-    string outputStr = web3->EthSendSignedTransaction(&paramStr, len);
-    strcpy((char*)output, outputStr.c_str());
+
+    return web3->EthSendSignedTransaction(&paramStr, len);
+
 }
+
+/**
+ * Private functions
+ * */
 
 void Contract::SetupTransactionImpl1(uint8_t* signature, int* recid, uint32_t nonceVal, uint32_t gasPriceVal, uint32_t  gasLimitVal,
                                 uint8_t* toStr, uint8_t* valueStr, uint8_t* dataStr) {
@@ -163,8 +185,8 @@ void Contract::SetupTransactionImpl1(uint8_t* signature, int* recid, uint32_t no
     uint32_t encoded_len = RlpEncode(encoded, nonceVal, gasPriceVal, gasLimitVal, toStr, valueStr, dataStr);
 
     // hash
+    Util::BufToCharStr(tmp, encoded, encoded_len);
     string t = string(tmp);
-    Util::BufToString(tmp, encoded, encoded_len);
     string hashedStr = web3->Web3Sha3(&t);
 
     // sign

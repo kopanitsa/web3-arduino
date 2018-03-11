@@ -25,9 +25,8 @@ public:
     void SetPrivateKey(const uint8_t *key);
     string SetupContractData(const string *func, ...);
     string Call(const string* param);
-    void SendTransaction(uint8_t *msg,
-                         uint32_t nonceVal, uint32_t gasPriceVal, uint32_t gasLimitVal,
-                         uint8_t *toStr, uint8_t *valueStr, uint8_t *dataStr);
+    string SendTransaction(uint32_t nonceVal, uint32_t gasPriceVal, uint32_t gasLimitVal,
+                           string *toStr, string *valueStr, string *dataStr);
 
 private:
     Log Debug;
