@@ -59,7 +59,7 @@ string Contract::SetupContractData(const string *func, ...) {
     string contractBytes = GenerateContractBytes(func);
     ret = contractBytes;
 
-#if 1
+#if 0
     LOG("=SetupContractData::contractBytes=============");
     LOG(contractBytes.c_str());
     LOG("==============================================");
@@ -111,7 +111,7 @@ string Contract::SetupContractData(const string *func, ...) {
     }
     va_end(args);
 
-#if 1
+#if 0
     LOG("=SetupContractData::ret=============");
     LOG(ret.c_str());
     LOG("====================================");
@@ -157,7 +157,7 @@ string Contract::SendTransaction(uint32_t nonceVal, uint32_t gasPriceVal, uint32
     Util::BufToCharStr(tmp, param, len);
     string paramStr = string(tmp);
 
-#if 1
+#if 0
     printf("\nGenerated Transaction--------\n ");
     printf("len:%d\n", (int)len);
     for (int i = 0; i<len; i++) {
