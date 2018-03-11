@@ -69,23 +69,24 @@ string Contract::SetupContractData(const string *func, ...) {
 #endif
 
     size_t paramCount = 0;
-    char params[8][20];
-    memset(params, 0, 20*8);
+    vector<string> params;
     char *p;
-    char tmp[64];
-    memset(tmp, 0, 64);
+    char tmp[func->size()];
+    memset(tmp, 0, sizeof(tmp));
     strcpy(tmp, func->c_str());
     strtok(tmp, "(");
     p = strtok(0, "(");
     p = strtok(p, ")");
     p = strtok(p, ",");
-    if (p != 0 && strlen(p) < 20) {
-        strcpy(params[paramCount++], p);
+    if (p != 0) {
+        params.push_back(string(p));
+        paramCount++;
     }
     while(p != 0) {
         p = strtok(0, ",");
-        if (p != 0 && strlen(p) < 20) {
-            strcpy(params[paramCount++], p);
+        if (p != 0) {
+            params.push_back(string(p));
+            paramCount++;
         }
     }
 
@@ -93,21 +94,21 @@ string Contract::SetupContractData(const string *func, ...) {
     va_list args;
     va_start(args, paramCount);
     for( int i = 0; i < paramCount; ++i ) {
-        if (strncmp(params[i], "uint", 4) == 0) {
+        if (strncmp(params[i].c_str(), "uint", sizeof("uint")) == 0) {
             string output = GenerateBytesForUint(va_arg(args, uint32_t));
             ret = ret + output;
-        } else if (strncmp(params[i], "int", 3) == 0
-                   || strncmp(params[i], "bool", 4) == 0) {
+        } else if (strncmp(params[i].c_str(), "int", sizeof("int")) == 0
+                   || strncmp(params[i].c_str(), "bool", sizeof("bool")) == 0) {
             string output = GenerateBytesForInt(va_arg(args, int32_t));
             ret = ret + string(output);
-        } else if (strncmp(params[i], "address", 7) == 0) {
+        } else if (strncmp(params[i].c_str(), "address", sizeof("address")) == 0) {
             string output = GenerateBytesForAddress(va_arg(args, string*));
             ret = ret + string(output);
-        } else if (strncmp(params[i], "string", 6) == 0) {
+        } else if (strncmp(params[i].c_str(), "string", sizeof("string")) == 0) {
             string output = GenerateBytesForString(va_arg(args, string*));
             ret = ret + string(output);
-        } else if (strncmp(params[i], "bytes", 5) == 0) {
-            long len = strtol(params[i]+5, nullptr,10);
+        } else if (strncmp(params[i].c_str(), "bytes", sizeof("bytes")) == 0) {
+            long len = strtol(params[i].c_str()+5, nullptr,10);
             string output = GenerateBytesForBytes(va_arg(args, char*), len);
             ret = ret + string(output);
         }
@@ -143,7 +144,7 @@ string Contract::SendTransaction(uint32_t nonceVal, uint32_t gasPriceVal, uint32
     uint8_t signature[SIGNATURE_LENGTH];
     memset(signature,0,SIGNATURE_LENGTH);
     int recid[1] = {0};
-    SetupTransactionImpl1(signature, recid, nonceVal, gasPriceVal, gasLimitVal,
+    GenerateSignature(signature, recid, nonceVal, gasPriceVal, gasLimitVal,
                           toStr, valueStr, dataStr);
     vector<uint8_t>param = RlpEncodeForRawTransaction(nonceVal, gasPriceVal, gasLimitVal,
                                          toStr, valueStr, dataStr,
@@ -168,7 +169,7 @@ string Contract::SendTransaction(uint32_t nonceVal, uint32_t gasPriceVal, uint32
  * Private functions
  * */
 
-void Contract::SetupTransactionImpl1(uint8_t* signature, int* recid, uint32_t nonceVal, uint32_t gasPriceVal, uint32_t  gasLimitVal,
+void Contract::GenerateSignature(uint8_t* signature, int* recid, uint32_t nonceVal, uint32_t gasPriceVal, uint32_t  gasLimitVal,
                                 string* toStr, string* valueStr, string* dataStr) {
     vector<uint8_t> encoded = RlpEncode(nonceVal, gasPriceVal, gasLimitVal, toStr, valueStr, dataStr);
 

@@ -47,8 +47,8 @@ private:
     string GenerateBytesForString(const string *value);
     string GenerateBytesForBytes(const char* value, const int len);
 
-    void SetupTransactionImpl1(uint8_t* signature, int* recid, uint32_t nonceVal, uint32_t gasPriceVal, uint32_t  gasLimitVal,
-                                         string* toStr, string* valueStr, string* dataStr);
+    void GenerateSignature(uint8_t* signature, int* recid, uint32_t nonceVal, uint32_t gasPriceVal, uint32_t  gasLimitVal,
+                           string* toStr, string* valueStr, string* dataStr);
     vector<uint8_t> RlpEncode(
             uint32_t nonceVal, uint32_t gasPriceVal, uint32_t  gasLimitVal,
             string* toStr, string* valueStr, string* dataStr);
