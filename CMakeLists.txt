@@ -51,4 +51,4 @@ add_custom_target(
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-add_executable(${PROJECT_NAME} ${SRC_LIST} src/example/example.cpp src/Conf.h src/Web3.cpp src/Web3.h src/Log.cpp src/Log.h src/web3/Contract.cpp src/web3/Contract.h)
+add_executable(${PROJECT_NAME} ${SRC_LIST} src/examples/example.cpp src/Conf.h src/Web3.cpp src/Web3.h src/Log.cpp src/Log.h src/web3/Contract.cpp src/web3/Contract.h)

@@ -6,6 +6,7 @@
 #include "Arduino.h"
 #include <cstdio>
 #include <cstdlib>
+#include <vector>
 
 // returns output (header) length
 uint32_t Util::RlpEncodeWholeHeader(uint8_t* header_output, uint32_t total_len) {
@@ -37,6 +38,35 @@ uint32_t Util::RlpEncodeWholeHeader(uint8_t* header_output, uint32_t total_len) 
         return hexdigit+1;
     }
 }
+
+vector<uint8_t> Util::RlpEncodeWholeHeaderWithVector(uint32_t total_len) {
+    vector<uint8_t> header_output;
+    if (total_len < 55) {
+        header_output.push_back((uint8_t)0xc0 + (uint8_t)total_len);
+    } else {
+        vector<uint8_t> tmp_header;
+        uint32_t hexdigit = 1;
+        uint32_t tmp = total_len;
+        while ((uint32_t)(tmp / 256) > 0) {
+            tmp_header.push_back((uint8_t)(tmp % 256));
+            tmp = (uint32_t)(tmp / 256);
+            hexdigit++;
+        }
+        tmp_header.push_back((uint8_t)(tmp));
+        tmp_header.insert(tmp_header.begin(), 0xf7 + (uint8_t)hexdigit);
+
+        // fix direction for header
+        vector<uint8_t> header;
+        header.push_back(tmp_header[0]);
+        for (int i=0; i<tmp_header.size()-1; i++) {
+            header.push_back(tmp_header[tmp_header.size()-1-i]);
+        }
+
+        header_output.insert(header_output.end(), header.begin(), header.end());
+    }
+    return header_output;
+}
+
 
 // returns output length
 uint32_t Util::RlpEncodeItem(uint8_t* output, const uint8_t* input, uint32_t input_len) {
@@ -80,6 +110,62 @@ uint32_t Util::RlpEncodeItem(uint8_t* output, const uint8_t* input, uint32_t inp
     }
 }
 
+vector<uint8_t> Util::RlpEncodeItemWithVector(const vector<uint8_t> input) {
+    vector<uint8_t> output;
+    uint16_t input_len = input.size();
+
+    if (input_len==1 && input[0] == 0x00) {
+        output.push_back(0x80);
+    } else if (input_len==1 && input[0] < 128) {
+        output.insert(output.end(), input.begin(), input.end());
+    } else if (input_len <= 55) {
+        uint8_t _ = (uint8_t)0x80 + (uint8_t)input_len;
+        output.push_back(_);
+        output.insert(output.end(), input.begin(), input.end());
+    } else {
+        vector<uint8_t> tmp_header;
+        uint32_t tmp = input_len;
+        while ((uint32_t)(tmp / 256) > 0) {
+            tmp_header.push_back((uint8_t)(tmp % 256));
+            tmp = (uint32_t)(tmp / 256);
+        }
+        tmp_header.push_back((uint8_t)(tmp));
+        uint8_t len = tmp_header.size() + 1;
+        tmp_header.insert(tmp_header.begin(), 0xb7 + len);
+
+        // fix direction for header
+        vector<uint8_t> header;
+        header.push_back(tmp_header[0]);
+        uint8_t hexdigit = tmp_header.size() - 1;
+        for (int i=0; i<hexdigit; i++) {
+            header.push_back(tmp_header[hexdigit-i]);
+        }
+
+        output.insert(output.end(), header.begin(), header.end());
+        output.insert(output.end(), input.begin(), input.end());
+    }
+    return output;
+}
+
+vector<uint8_t> Util::ConvertNumberToVector(uint32_t val) {
+    vector<uint8_t> tmp;
+    vector<uint8_t> ret;
+    if ((uint32_t)(val / 256) >= 0) {
+        while ((uint32_t)(val / 256) > 0) {
+            tmp.push_back((uint8_t)(val % 256));
+            val = (uint32_t)(val / 256);
+        }
+        tmp.push_back((uint8_t)(val % 256));
+        uint8_t len = tmp.size();
+        for (int i=0; i<len; i++) {
+            ret.push_back(tmp[len-i-1]);
+        }
+    } else {
+        ret.push_back((uint8_t)val);
+    }
+    return ret;
+}
+
 uint32_t Util::ConvertNumberToUintArray(uint8_t *str, uint32_t val) {
     uint32_t ret = 0;
     uint8_t tmp[8];
@@ -101,7 +187,34 @@ uint32_t Util::ConvertNumberToUintArray(uint8_t *str, uint32_t val) {
     return ret+1;
 }
 
-uint32_t Util::ConvertStringToUintArray(uint8_t *out, const uint8_t *in) {
+vector<uint8_t> Util::ConvertCharStrToVector(const uint8_t *in) {
+    uint32_t ret = 0;
+    uint8_t tmp[256];
+    strcpy((char *)tmp, (char *)in);
+    vector<uint8_t> out;
+
+    // remove "0x"
+    char * ptr = strtok((char*)tmp, "x");
+    if (strlen(ptr)!=1) {
+        ptr = (char *)tmp;
+    } else {
+        ptr = strtok(NULL, "x");
+    }
+
+    size_t lenstr = strlen(ptr);
+    for (int i=0; i<lenstr; i+=2) {
+        char c[3];
+        c[0] = *(ptr+i);
+        c[1] = *(ptr+i+1);
+        c[2] = 0x00;
+        uint8_t val = strtol(c, nullptr, 16);
+        out.push_back(val);
+        ret++;
+    }
+    return out;
+}
+
+uint32_t Util::ConvertCharStrToUintArray(uint8_t *out, const uint8_t *in) {
     uint32_t ret = 0;
     uint8_t tmp[256];
     strcpy((char *)tmp, (char *)in);

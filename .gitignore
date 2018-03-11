@@ -1,5 +1,6 @@
 src/Conf.h
 src/example/*
+src/examples/*
 readme_for_me.md
 tools/
 lib/
