@@ -21,10 +21,10 @@ public:
     Options options;
 
 public:
-    Contract(Web3* _web3, const char* address);
-    void SetPrivateKey(uint8_t *key);
-    void SetupContractData(char *out, const char *func, ...);
-    void Call(char* param);
+    Contract(Web3* _web3, const string* address);
+    void SetPrivateKey(const uint8_t *key);
+    string SetupContractData(const string *func, ...);
+    string Call(const string* param);
     void SendTransaction(uint8_t *msg,
                          uint32_t nonceVal, uint32_t gasPriceVal, uint32_t gasLimitVal,
                          uint8_t *toStr, uint8_t *valueStr, uint8_t *dataStr);
@@ -34,16 +34,16 @@ private:
     #define LOG(x) Debug.println(x)
 
     Web3* web3;
-    const char * contractAddress;
-    uint8_t * privateKey;
+    const string * contractAddress;
+    const uint8_t * privateKey;
 
 private:
-    void GenerateContractBytes(const char *func, char *out);
-    void GenerateBytesForInt(char *output, int32_t value);
-    void GenerateBytesForUint(char *output, uint32_t value);
-    void GenerateBytesForAddress(char *output, char *value);
-    void GenerateBytesForString(char *output, char *value);
-    void GenerateBytesForBytes(char *output, char* value, int len);
+    string GenerateContractBytes(const string *func);
+    string GenerateBytesForInt(const int32_t value);
+    string GenerateBytesForUint(const uint32_t value);
+    string GenerateBytesForAddress(const string *value);
+    string GenerateBytesForString(const string *value);
+    string GenerateBytesForBytes(const char* value, const int len);
 
     void SetupTransactionImpl1(uint8_t* signature, int* recid, uint32_t nonceVal, uint32_t gasPriceVal, uint32_t  gasLimitVal,
                                          uint8_t* toStr, uint8_t* valueStr, uint8_t* dataStr);

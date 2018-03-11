@@ -14,7 +14,7 @@
 
 static secp256k1_context *ctx;
 
-Contract::Contract(Web3* _web3, const char* address) {
+Contract::Contract(Web3* _web3, const string* address) {
     web3 = _web3;
     contractAddress = address;
     options.gas=0;
@@ -25,7 +25,7 @@ Contract::Contract(Web3* _web3, const char* address) {
     ctx = secp256k1_context_create(SECP256K1_CONTEXT_SIGN);
 }
 
-void Contract::SetPrivateKey(uint8_t *key) {
+void Contract::SetPrivateKey(const uint8_t *key) {
     privateKey = key;
 }
 
@@ -48,17 +48,17 @@ void Contract::SetPrivateKey(uint8_t *key) {
 //    bytes,
 //    <type>[],
 // --------------------------------------------
-void Contract::SetupContractData(char *out, const char *func, ...) {
-    // addressの生成
-    char contractBytes[11];
-    memset(contractBytes, 0, 11);
-    GenerateContractBytes(func, contractBytes);
-    sprintf(out, "%s%s", out, contractBytes);
+string Contract::SetupContractData(const string *func, ...) {
+    string ret = "";
 
-#if 0
-    LOG("==============");
-    LOG(contractBytes);
-    LOG("==============");
+    // addressの生成
+    string contractBytes = GenerateContractBytes(func);
+    ret = contractBytes;
+
+#if 1
+    LOG("=SetupContractData::contractBytes=============");
+    LOG(contractBytes.c_str());
+    LOG("==============================================");
 #endif
 
     size_t paramCount = 0;
@@ -67,7 +67,7 @@ void Contract::SetupContractData(char *out, const char *func, ...) {
     char *p;
     char tmp[64];
     memset(tmp, 0, 64);
-    strcpy(tmp, func);
+    strcpy(tmp, func->c_str());
     strtok(tmp, "(");
     p = strtok(0, "(");
     p = strtok(p, ")");
@@ -87,45 +87,46 @@ void Contract::SetupContractData(char *out, const char *func, ...) {
     va_start(args, paramCount);
     for( int i = 0; i < paramCount; ++i ) {
         if (strncmp(params[i], "uint", 4) == 0) {
-            char output[64+2+1];
-            memset(output, 0, 64+2+1);
-            GenerateBytesForUint(output, va_arg(args, uint32_t));
-            sprintf(out, "%s%s", out, output);
+            string output = GenerateBytesForUint(va_arg(args, uint32_t));
+            ret = ret + output;
         } else if (strncmp(params[i], "int", 3) == 0
                    || strncmp(params[i], "bool", 4) == 0) {
-            char output[64+2+1];
-            memset(output, 0, 64+2+1);
-            GenerateBytesForInt(output, va_arg(args, int32_t));
-            sprintf(out, "%s%s", out, output);
+            string output = GenerateBytesForInt(va_arg(args, int32_t));
+            ret = ret + string(output);
         } else if (strncmp(params[i], "address", 7) == 0) {
-            char output[64+2+1];
-            memset(output, 0, 64+2+1);
-            GenerateBytesForAddress(output, va_arg(args, char*));
-            sprintf(out, "%s%s", out, output);
+            string output = GenerateBytesForAddress(va_arg(args, string*));
+            ret = ret + string(output);
         } else if (strncmp(params[i], "string", 6) == 0) {
-            char output[64+2+1];
-            memset(output, 0, 64+2+1);
-            GenerateBytesForString(output, va_arg(args, char*));
-            sprintf(out, "%s%s", out, output);
+            string output = GenerateBytesForString(va_arg(args, string*));
+            ret = ret + string(output);
         } else if (strncmp(params[i], "bytes", 5) == 0) {
-            char output[64+2+1];
-            memset(output, 0, 64+2+1);
             long len = strtol(params[i]+5, nullptr,10);
-            GenerateBytesForBytes(output, va_arg(args, char*), len);
-            sprintf(out, "%s%s", out, output);
+            string output = GenerateBytesForBytes(va_arg(args, char*), len);
+            ret = ret + string(output);
         }
     }
     va_end(args);
+
+#if 1
+    LOG("=SetupContractData::ret=============");
+    LOG(ret.c_str());
+    LOG("====================================");
+#endif
+
+    return ret;
 }
 
-void Contract::Call(char* param) {
-    string paramStr = string(param);
-    string from = string(options.from);
-    long gasPrice = strtol(options.gasPrice, nullptr, 10);
-    string addr = string(contractAddress);
-    string value = "";
-    string result = web3->EthCall(&from, &addr, options.gas, gasPrice, &value, &paramStr);
-    LOG(result.c_str());
+string Contract::Call(const string* param) {
+    const string from = string(options.from);
+    const long gasPrice = strtol(options.gasPrice, nullptr, 10);
+    const string value = "";
+    printf("from: %s\n", from.c_str());
+    printf("to: %s\n", contractAddress->c_str());
+    printf("value: %s\n", value.c_str());
+    printf("data: %s\n", param->c_str());
+    printf(param->c_str());
+    string result = web3->EthCall(&from, contractAddress, options.gas, gasPrice, &value, param);
+    return result;
 }
 
 void Contract::SendTransaction(uint8_t *output,
@@ -191,54 +192,49 @@ uint32_t Contract::SetupTransactionImpl2(uint8_t* out,
 }
 
 
-void Contract::GenerateContractBytes(const char* func, char* out) {
-    char intmp[128];
-    memset(intmp, 0, 128);
-    sprintf(intmp, "0x");
+string Contract::GenerateContractBytes(const string* func) {
+    string in = "0x";
+    char intmp[8];
+    memset(intmp, 0, 8);
     int i = 0;
     for (int i = 0; i<128; i++) {
-        char c = func[i];
+        char c = (*func)[i];
         if (c == '\0') {
             break;
         }
-        sprintf(intmp, "%s%x", intmp, c);
+        sprintf(intmp, "%x", c);
+        in = in + intmp;
     }
-
-    string in = string(intmp);
-    string outtmp = web3->Web3Sha3(&in);
-    strncpy(out, outtmp.c_str(), 10);
+    string out = web3->Web3Sha3(&in);
+    out.resize(10);
+    return out;
 }
 
-void Contract::GenerateBytesForUint(char *output, uint32_t value) {
-    // check "M" in uint<M>
-    int M = 256;
-    char * tmp[4];
-    memset(tmp, 0, 4);
+string Contract::GenerateBytesForUint(const uint32_t value) {
+    char output[70];
+    memset(output, 0, sizeof(output));
 
     // check number of digits
     char dummy[64];
     int digits = sprintf(dummy, "%x", (uint32_t)value);
 
     // fill 0 and copy number to string
-//    sprintf(output, "%s", "0x");
     for(int i = 2; i < 2+64-digits; i++){
         sprintf(output, "%s%s", output, "0");
     }
     sprintf(output,"%s%x", output, (uint32_t)value);
+    return string(output);
 }
 
-void Contract::GenerateBytesForInt(char *output, int32_t value) {
-    // check "M" in uint<M>
-    int M = 256;
-    char * tmp[4];
-    memset(tmp, 0, 4);
+string Contract::GenerateBytesForInt(const int32_t value) {
+    char output[70];
+    memset(output, 0, sizeof(output));
 
     // check number of digits
     char dummy[64];
     int digits = sprintf(dummy, "%x", value);
 
     // fill 0 and copy number to string
-    // sprintf(output,"%s", "0x");
     char fill[2];
     if (value >= 0) {
         sprintf(fill, "%s", "0");
@@ -249,39 +245,35 @@ void Contract::GenerateBytesForInt(char *output, int32_t value) {
         sprintf(output, "%s%s", output, fill);
     }
     sprintf(output,"%s%x", output, value);
+    return string(output);
 }
 
-void Contract::GenerateBytesForAddress(char *output, char* value) {
-    size_t digits = strlen(value) - 2;
+string Contract::GenerateBytesForAddress(const string* value) {
+    size_t digits = value->size() - 2;
 
-    // sprintf(output, "%s", "0x");
+    string zeros = "";
     for(int i = 2; i < 2+64-digits; i++){
-        sprintf(output, "%s%s", output, "0");
+        zeros = zeros + "0";
     }
-    sprintf(output,"%s%s", output, value+2);
-
-    strlen(value);
+    string tmp = string(*value);
+    tmp.erase(tmp.begin(), tmp.begin() + 2);
+    return zeros + tmp;
 }
 
-void Contract::GenerateBytesForString(char *output, char* value) {
-    size_t digits = strlen(value);
-
-    // sprintf(output, "%s%s", output, "0x");
-    for(int i = 0; i < digits; i++){
-        sprintf(output, "%s%x", output, value[i]);
-    }
-    size_t remain = 32 - ((strlen(output)-2) % 32);
+string Contract::GenerateBytesForString(const string* value) {
+    string zeros = "";
+    size_t remain = 32 - ((value->size()-2) % 32);
     for(int i = 0; i < remain + 32; i++){
-        sprintf(output, "%s%s", output, "0");
+        zeros = zeros + "0";
     }
+
+    return *value + zeros;
 }
 
-void Contract::GenerateBytesForBytes(char *output, char* value, int len) {
-    // check "M" in uint<M>
-    int M = 256;
-    char * tmp[4];
-    memset(tmp, 0, 4);
-    // sprintf(output, "%s%s", output, "0x");
+string Contract::GenerateBytesForBytes(const char* value, const int len) {
+    char output[70];
+    memset(output, 0, sizeof(output));
+
     for(int i = 0; i < len; i++){
         sprintf(output, "%s%x", output, value[i]);
     }
@@ -290,6 +282,7 @@ void Contract::GenerateBytesForBytes(char *output, char* value, int len) {
         sprintf(output, "%s%s", output, "0");
     }
 
+    return string(output);
 }
 
 uint32_t Contract::RlpEncode(uint8_t* encoded,

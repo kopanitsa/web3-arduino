@@ -12,7 +12,7 @@ using namespace std;
 
 class Web3 {
 public:
-    Web3(string* _host, string* _path);
+    Web3(const string* _host, const string* _path);
     string Web3ClientVersion();
     string Web3Sha3(const string* data);
     int NetVersion();
@@ -25,15 +25,15 @@ public:
     long long int EthGasPrice();
     void EthAccounts(char** array, int size);
     int EthBlockNumber();
-    long long int EthGetBalance(string* address);
-    int EthGetTransactionCount(string* address);
+    long long int EthGetBalance(const string* address);
+    int EthGetTransactionCount(const string* address);
 
-    string EthCall(string* from, string* to, long gas, long gasPrice, string* value, string* data);
-    string EthSendSignedTransaction(string* data, uint32_t dataLen);
+    string EthCall(const string* from, const string* to, long gas, long gasPrice, const string* value, const string* data);
+    string EthSendSignedTransaction(const string* data, const uint32_t dataLen);
 
 private:
-    string exec(string* data);
-    string generateJson(string* method, string* params);
+    string exec(const string* data);
+    string generateJson(const string* method, const string* params);
     int getInt(const string* json);
     long getLong(const string* json);
     long long int getLongLong(const string* json);
@@ -42,8 +42,8 @@ private:
     string getString(const string* json);
 
 private:
-    string* host;
-    string* path;
+    const string* host;
+    const string* path;
 
 
 };

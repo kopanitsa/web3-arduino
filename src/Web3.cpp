@@ -15,7 +15,7 @@ WiFiClientSecure client;
 Log debug;
 #define LOG(x) debug.println(x)
 
-Web3::Web3(string* _host, string* _path) {
+Web3::Web3(const string* _host, const string* _path) {
     client.setCACert(infura_ca_cert);
     host = _host;
     path = _path;
@@ -124,7 +124,7 @@ int Web3::EthBlockNumber() {
     return getInt(&output);
 }
 
-long long int Web3::EthGetBalance(string* address) {
+long long int Web3::EthGetBalance(const string* address) {
     string m = "eth_getBalance";
     string p = "[\"" + *address + "\",\"latest\"]";
     string input = generateJson(&m, &p);
@@ -132,7 +132,7 @@ long long int Web3::EthGetBalance(string* address) {
     return getLongLong(&output);
 }
 
-int Web3::EthGetTransactionCount(string* address) {
+int Web3::EthGetTransactionCount(const string* address) {
     string m = "eth_getTransactionCount";
     string p = "[\"" + *address + "\",\"latest\"]";
     string input = generateJson(&m, &p);
@@ -140,8 +140,8 @@ int Web3::EthGetTransactionCount(string* address) {
     return getInt(&output);
 }
 
-string Web3::EthCall(string* from, string* to, long gas, long gasPrice,
-                   string* value, string* data) {
+string Web3::EthCall(const string* from, const string* to, long gas, long gasPrice,
+                     const string* value, const string* data) {
     // TODO use gas, gasprice and value
     string m = "eth_call";
     string p = "[{\"from\":\"" + *from + "\",\"to\":\""
@@ -150,7 +150,7 @@ string Web3::EthCall(string* from, string* to, long gas, long gasPrice,
     return exec(&input);
 }
 
-string Web3::EthSendSignedTransaction(string* data, uint32_t dataLen) {
+string Web3::EthSendSignedTransaction(const string* data, const uint32_t dataLen) {
     string m = "eth_sendRawTransaction";
     string p = "[\"" + *data + "\"]";
     string input = generateJson(&m, &p);
@@ -163,11 +163,11 @@ string Web3::EthSendSignedTransaction(string* data, uint32_t dataLen) {
 // -------------------------------
 // Private
 
-string Web3::generateJson(string* method, string* params) {
+string Web3::generateJson(const string* method, const string* params) {
     return "{\"jsonrpc\":\"2.0\",\"method\":\"" + *method + "\",\"params\":" + *params + ",\"id\":0}";
 }
 
-string Web3::exec(string* data) {
+string Web3::exec(const string* data) {
     string result;
 
     // start connection
