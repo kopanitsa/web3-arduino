@@ -43,13 +43,12 @@ void loop() {
 }
 
 void eth_call_example() {
-    char result[512];
-    memset(result, 0, 512);
     Contract contract(&web3, CONTRACT_ADDRESS);
     strcpy(contract.options.from, MY_ADDRESS);
     strcpy(contract.options.gasPrice,"2000000000000");
     contract.options.gas = 5000000;
-    contract.SetupContractData(result, "get()");
-    contract.Call(result);
-    USE_SERIAL.println(result);
+    string func = "buyCoin()";
+    string param = contract.SetupContractData(&func);
+    string result = contract.Call(&param);
+    USE_SERIAL.println(result.c_str());
 }

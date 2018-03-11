@@ -79,16 +79,16 @@ void eth_example() {
     sprintf(tmp, "%d", blockNumber);
     USE_SERIAL.println(tmp);
 
-    long long int balance = web3.EthGetBalance(ADDRESS);
+    string address = "0xd7049ea6f47ef848C0Ad570dbA618A9f6e4Eb25C";
+    long long int balance = web3.EthGetBalance(&address);
     USE_SERIAL.println("eth_getBalance");
     memset(tmp, 0, 32);
     sprintf(tmp, "%lld", balance);
     USE_SERIAL.println(tmp);
 
-    int txcount = web3.EthGetTransactionCount(ADDRESS);
-    USE_SERIAL.println("eth_getBalance");
+    int txcount = web3.EthGetTransactionCount(&address);
+    USE_SERIAL.println("eth_getTransactionCount");
     memset(tmp, 0, 32);
     sprintf(tmp, "%d", txcount);
     USE_SERIAL.println(tmp);
-
 }
