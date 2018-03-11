@@ -47,9 +47,6 @@ void loop() {
 }
 
 void eth_send_example() {
-    char result[32];
-    memset(result, 0, 32);
-
     Contract contract(&web3, CONTRACT_ADDRESS);
     contract.SetPrivateKey((uint8_t*)PRIVATE_KEY);
     uint32_t nonceVal = (uint32_t)web3.EthGetTransactionCount((char *)MY_ADDRESS);
@@ -60,9 +57,9 @@ void eth_send_example() {
     uint8_t valueStr[] = "0x00";
     uint8_t dataStr[100];
     memset(dataStr, 0, 100);
-    contract.SetupContractData((char*)dataStr, "set(uint256)", 123);
-    contract.SendTransaction((uint8_t *) result,
-                             nonceVal, gasPriceVal, gasLimitVal, toStr, valueStr, dataStr);
+    string func = "set(uint256)";
+    string p = contract.SetupContractData(&func, 123);
+    string result = contract.SendTransaction(nonceVal, gasPriceVal, gasLimitVal, &toStr, &valueStr, &p);
 
     USE_SERIAL.println(result);
 }

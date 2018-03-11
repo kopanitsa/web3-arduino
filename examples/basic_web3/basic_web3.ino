@@ -40,15 +40,12 @@ void loop() {
 }
 
 void web3_example() {
-    char result[128];
-
-    memset(result, 0, 128);
-    web3.Web3ClientVersion(result);
+    string result = web3.Web3ClientVersion();
     USE_SERIAL.println("web3_ClientVersion");
-    USE_SERIAL.println(result); // Geth/v1.7.3-stable-4bb3c89d/linux-amd64/go1.9
+    USE_SERIAL.println(result.c_str());
 
-    memset(result, 0, 128);
-    web3.Web3Sha3("0x68656c6c6f20776f726c64", result);
+    string src = "0x68656c6c6f20776f726c64";
+    result = web3.Web3Sha3(&src);
     USE_SERIAL.println("web3_sha3");
-    USE_SERIAL.println(result); // 0x47173285a8d7341e5e972fc677286384f802f8ef42a5ec5f03bbfa254cb01fad
+    USE_SERIAL.println(result.c_str()); // 0x47173285a8d7341e5e972fc677286384f802f8ef42a5ec5f03bbfa254cb01fad
 }

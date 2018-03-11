@@ -67,8 +67,6 @@ void testWeb3() {
 }
 
 void testNet() {
-    char result[128];
-
     int version = web3.NetVersion();
     USE_SERIAL.println("net_version");
     USE_SERIAL.println(version); // 4
@@ -81,7 +79,6 @@ void testNet() {
         USE_SERIAL.println("not listening");
     }
 
-    memset(result, 0, 128);
     int peerCount = web3.NetPeerCount();
     USE_SERIAL.println("net_peerCount");
     USE_SERIAL.println(peerCount);
