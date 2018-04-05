@@ -9,7 +9,7 @@
 #define INFURA_PATH "/<YOUR_INFURA_ID>"
 #define ADDRESS "0x<YOUR_ETH_ADDRESS>"
 
-Web3 web3(INFURA_HOST, INFURA_PATH);
+Web3 web3((string *)INFURA_HOST, (string *)INFURA_PATH);
 
 void eth_example();
 
