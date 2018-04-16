@@ -1,6 +1,6 @@
 pragma solidity ^0.4.18;
 
-contract Sample {
+contract Log {
     uint data;
 
     function set(uint d) public{
