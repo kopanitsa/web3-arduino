@@ -29,14 +29,15 @@
 
 1. download the zip file from `Clone or download` button on Github.
 2. launch Arduino IDE.
-3. `Sketch` -> `Include Library` -> `Add .ZIP file` -> select downloaded zip file.
-4. Then you can use this from Arduino IDE.
+3. Install board settings [ESP32-Arduino](https://github.com/espressif/arduino-esp32)
+4. `Sketch` -> `Include Library` -> `Add .ZIP file` -> select downloaded zip file.
+5. Then you can use this from Arduino IDE.
 
 ## Example
 
-Please refer `examples` directory.
+Please refer `examples` directory to learn more about how to use the libraries
 
-### setup
+### Setup
 
 ```C++
 #define INFURA_HOST "rinkeby.infura.io"
@@ -44,52 +45,15 @@ Please refer `examples` directory.
 
 Web3 web3(INFURA_HOST, INFURA_PATH);
 ```
+### Generate a private key
+```python -c 'import os; print ", ".join([ str(ord(c)) for c in bytes(os.urandom(32)) ])'```
 
-### call web3 methods
+Copy this to terminal and paste the output as your private key in the ino file.
 
-```C++
-char result[128];
+To convert this to a private key you can use in MyEtherWallet you do: 
+```print ''.join('{:02x}'.format(x) for x in array_alpha)```
 
-web3.Web3ClientVersion(result);
-USE_SERIAL.println(result);
-
-web3.Web3Sha3("0x68656c6c6f20776f726c64", result);
-USE_SERIAL.println(result);
-```
-
-### `call` to Contract
-
-```C++
-Contract contract(&web3, CONTRACT_ADDRESS);
-strcpy(contract.options.from, MY_ADDRESS);
-strcpy(contract.options.gasPrice,"2000000000000");
-contract.options.gas = 5000000;
-contract.SetupContractData(result, "get()");
-contract.Call(result);
-USE_SERIAL.println(result);
-```
-
-### `sendTransaction` to Contract
-
-```C++
-Contract contract(&web3, CONTRACT_ADDRESS);
-contract.SetPrivateKey((uint8_t*)PRIVATE_KEY);
-uint32_t nonceVal = (uint32_t)web3.EthGetTransactionCount((char *)MY_ADDRESS);
-
-uint32_t gasPriceVal = 141006540;
-uint32_t  gasLimitVal = 3000000;
-uint8_t toStr[] = CONTRACT_ADDRESS;
-uint8_t valueStr[] = "0x00";
-uint8_t dataStr[100];
-memset(dataStr, 0, 100);
-contract.SetupContractData((char*)dataStr, "set(uint256)", 123);
-contract.SendTransaction((uint8_t *) result,
-                         nonceVal, gasPriceVal, gasLimitVal, toStr, valueStr, dataStr);
-
-USE_SERIAL.println(result);
-```
-
-## Dependency
+## Dependencies
 
 - [cJSON](https://github.com/DaveGamble/cJSON)
 - [secp256k1](https://github.com/bitcoin-core/secp256k1)
