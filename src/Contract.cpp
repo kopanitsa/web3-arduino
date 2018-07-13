@@ -94,10 +94,10 @@ string Contract::SetupContractData(const string *func, ...) {
     va_list args;
     va_start(args, paramCount);
     for( int i = 0; i < paramCount; ++i ) {
-        if (strncmp(params[i].c_str(), "uint", sizeof("uint")) == 0) {
+        if (strncmp(params[i].c_str(), "uint", sizeof("uint")-1) == 0) {
             string output = GenerateBytesForUint(va_arg(args, uint32_t));
             ret = ret + output;
-        } else if (strncmp(params[i].c_str(), "int", sizeof("int")) == 0
+        } else if (strncmp(params[i].c_str(), "int", sizeof("int")-1) == 0
                    || strncmp(params[i].c_str(), "bool", sizeof("bool")) == 0) {
             string output = GenerateBytesForInt(va_arg(args, int32_t));
             ret = ret + string(output);
@@ -107,7 +107,7 @@ string Contract::SetupContractData(const string *func, ...) {
         } else if (strncmp(params[i].c_str(), "string", sizeof("string")) == 0) {
             string output = GenerateBytesForString(va_arg(args, string*));
             ret = ret + string(output);
-        } else if (strncmp(params[i].c_str(), "bytes", sizeof("bytes")) == 0) {
+        } else if (strncmp(params[i].c_str(), "bytes", sizeof("bytes")-1) == 0) {
             long len = strtol(params[i].c_str()+5, nullptr,10);
             string output = GenerateBytesForBytes(va_arg(args, char*), len);
             ret = ret + string(output);
