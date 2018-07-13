@@ -130,13 +130,12 @@ vector<uint8_t> Util::RlpEncodeItemWithVector(const vector<uint8_t> input) {
             tmp = (uint32_t)(tmp / 256);
         }
         tmp_header.push_back((uint8_t)(tmp));
-        uint8_t len = tmp_header.size() + 1;
-        tmp_header.insert(tmp_header.begin(), 0xb7 + len);
+        uint8_t hexdigit = tmp_header.size();
+        tmp_header.insert(tmp_header.begin(), 0xb7 + hexdigit);
 
         // fix direction for header
         vector<uint8_t> header;
         header.push_back(tmp_header[0]);
-        uint8_t hexdigit = tmp_header.size() - 1;
         for (int i=0; i<hexdigit; i++) {
             header.push_back(tmp_header[hexdigit-i]);
         }
