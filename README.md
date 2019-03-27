@@ -1,3 +1,7 @@
+## unmaintained
+
+Sorry but I cannot take time to maintain the library now...
+
 ## web3-arduino
 
 ![img](https://user-images.githubusercontent.com/891384/36104056-4994f600-1054-11e8-94f4-9f067610a6bf.png)
