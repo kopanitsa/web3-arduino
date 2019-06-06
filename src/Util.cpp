@@ -10,7 +10,7 @@
 
 // returns output (header) length
 uint32_t Util::RlpEncodeWholeHeader(uint8_t* header_output, uint32_t total_len) {
-    if (total_len < 55) {
+    if (total_len <= 55) {
         header_output[0] = (uint8_t)0xc0 + (uint8_t)total_len;
         return 1;
     } else {
@@ -41,7 +41,7 @@ uint32_t Util::RlpEncodeWholeHeader(uint8_t* header_output, uint32_t total_len) 
 
 vector<uint8_t> Util::RlpEncodeWholeHeaderWithVector(uint32_t total_len) {
     vector<uint8_t> header_output;
-    if (total_len < 55) {
+    if (total_len <= 55) {
         header_output.push_back((uint8_t)0xc0 + (uint8_t)total_len);
     } else {
         vector<uint8_t> tmp_header;
