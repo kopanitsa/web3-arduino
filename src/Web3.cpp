@@ -7,7 +7,7 @@
 #include "CaCert.h"
 #include "Log.h"
 #include "Util.h"
-#include "cJSON/cJSON.h"
+#include <cJSON.h>
 #include <iostream>
 #include <sstream>
 
