@@ -31,6 +31,7 @@ String getMacAddress() {
   return String(baseMacChr);
 }
 
+
 void setup() {
     USE_SERIAL.begin(115200);
 
@@ -53,8 +54,7 @@ void setup() {
     }
 
     USE_SERIAL.println("Connected");
-
-
+    
     eth_send_example();
 }
 
@@ -67,15 +67,16 @@ void eth_send_example() {
     contract.SetPrivateKey((uint8_t*)PRIVATE_KEY);
     uint32_t nonceVal = (uint32_t)web3.EthGetTransactionCount(new std::string(MY_ADDRESS));
 
-    uint32_t gasPriceVal = 141006540;
+    uint32_t gasPriceVal = 1000000000;
     uint32_t  gasLimitVal = 3000000;
     std::string toStr(CONTRACT_ADDRESS);
-    std::string valueStr("0x00");
+    std::string valueStr("71AFD498D0000"); // 2mEth
     uint8_t dataStr[100];
     memset(dataStr, 0, 100);
-    string func = "set(uint256)";
+    string func = "buyCoin()";
     string p = contract.SetupContractData(&func, 123);
+    USE_SERIAL.println("transaction");
     string result = contract.SendTransaction(nonceVal, gasPriceVal, gasLimitVal, &toStr, &valueStr, &p);
-
+    USE_SERIAL.println("result");
     USE_SERIAL.println(result.c_str());
 }
