@@ -1,6 +1,6 @@
-## unmaintained
+## updated: compile and works as of ESP32 1.0.6  tested on a Dev Module
 
-Sorry but I cannot take time to maintain the library now...
+
 
 ## web3-arduino
 
