@@ -176,7 +176,6 @@ string Web3::exec(const string* data) {
     if (!connected) {
         return "";
     }
-
     LOG("Connected to server!");
     // Make a HTTP request:
     int l = data->size();
@@ -188,17 +187,23 @@ string Web3::exec(const string* data) {
     string strHost = "Host: " + *host;
     string strContentLen = "Content-Length: " + lstr;
 
+    LOG(strPost.c_str());
     client.println(strPost.c_str());
+    LOG(strHost.c_str());
     client.println(strHost.c_str());
     client.println("Content-Type: application/json");
+    LOG(strContentLen.c_str());
     client.println(strContentLen.c_str());
     client.println("Connection: close");
     client.println();
+    LOG("data:");
+    LOG(data->c_str());
     client.println(data->c_str());
 
+    LOG("answer:");
     while (client.connected()) {
         String line = client.readStringUntil('\n');
-        LOG(line.c_str());
+        //LOG(line.c_str());
         if (line == "\r") {
             break;
         }

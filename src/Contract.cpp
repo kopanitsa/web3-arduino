@@ -151,7 +151,7 @@ string Contract::SendTransaction(uint32_t nonceVal, uint32_t gasPriceVal, uint32
                                          signature, recid[0]);
     string paramStr = Util::VectorToString(param);
 
-#if 0
+#if 1
     printf("\nGenerated Transaction--------\n ");
     printf("len:%d\n", (int)param.size());
     for (int i = 0; i<param.size(); i++) {
