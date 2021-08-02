@@ -92,7 +92,7 @@ string Contract::SetupContractData(const string *func, ...) {
 
     // 上の個数と型に応じてbyte列を生成
     va_list args;
-    va_start(args, paramCount);
+    va_start(args, func);
     for( int i = 0; i < paramCount; ++i ) {
         if (strncmp(params[i].c_str(), "uint", sizeof("uint")) == 0) {
             string output = GenerateBytesForUint(va_arg(args, uint32_t));
@@ -151,7 +151,7 @@ string Contract::SendTransaction(uint32_t nonceVal, uint32_t gasPriceVal, uint32
                                          signature, recid[0]);
     string paramStr = Util::VectorToString(param);
 
-#if 0
+#if 1
     printf("\nGenerated Transaction--------\n ");
     printf("len:%d\n", (int)param.size());
     for (int i = 0; i<param.size(); i++) {
